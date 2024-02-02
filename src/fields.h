@@ -15,14 +15,14 @@ typedef struct field {
 class FieldArray {
 
   private:
-    int _nx;
-    int _ny;
-    int _nz;
-    int _ng;
-    int _nv;
+    int nx;
+    int ny;
+    int nz;
+    int ng;
+    int nv;
 
   public:
-    FieldArray(int nx, int ny, int nz, int ng);
+    FieldArray(int nx_, int ny_, int nz_, int ng_);
 
     field_t* f;
 

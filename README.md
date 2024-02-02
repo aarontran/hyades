@@ -4,6 +4,10 @@ README
 Hyades is an under-construction hybrid plasma simulation code (kinetic ions,
 fluid electrons) implemented in C++.
 
+It is a stripped-down, highly simplified and lean fork of the Hybrid-VPIC and
+VPIC simulation codes, keeping the overall framework and design, but omitting
+many features.
+
 
 Developer notes
 ---------------
