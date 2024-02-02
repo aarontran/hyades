@@ -34,6 +34,6 @@ double Random::normal(float mu, float sigma) {
   float u1 = drand();
   float u2 = drand();
   // discard the unused sin(...) sample
-  float x = sqrt(-2*log(u1))*cos(M_PI*u2/2);
-  return (x-mu)*sigma;
+  float x = sqrt(-2*log(u1))*cos(2*M_PI*u2);
+  return x*sigma + mu;
 }

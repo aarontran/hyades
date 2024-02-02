@@ -23,17 +23,67 @@ void ParticleArray::sort() {
 }
 
 // Sort the particle list
-void ParticleArray::maxwellian(float vth, int count, int seed) {
-  if (count > npmax) {
+void ParticleArray::maxwellian(float vth, float vdrx, float vdry, float vdrz, int count, int seed) {
+  if (np+count > npmax) {
     printf("WARNING: buffer overflow, aborting maxwellian init!!\n");
     return;
   }
   Random rng = Random(seed);
-  particle_t* p0 = p;
-  for (int ii=0; ii<count; ++ii) {
-    p0->ux = rng.normal(0, vth);
-    p0->uy = rng.normal(0, vth);
-    p0->uz = rng.normal(0, vth);
+  particle_t* p0 = &(p[np]);
+  for (int ii=np; ii<np+count; ++ii) {
+    p0->x   = 0;  // todo distribute on grid
+    p0->y   = 0;
+    p0->z   = 0;
+    p0->ux  = rng.normal(vdrx, vth);
+    p0->uy  = rng.normal(vdry, vth);
+    p0->uz  = rng.normal(vdrz, vth);
+    p0->w   = 1;
+    p0->ind = ii;
     ++p0;
   }
+  np = np+count;
+}
+
+// Compute vx moment on entire domain
+float ParticleArray::meanq_vx() {
+  particle_t* p0 = p;
+  double v = 0;  // High prec to reduce round-off error in summing many terms
+  for (int ii=0; ii<np; ++ii) {
+    v = v + p0->ux;
+    ++p0;
+  }
+  return v/np;
+}
+
+// Compute vy moment on entire domain
+float ParticleArray::meanq_vy() {
+  particle_t* p0 = p;
+  double v = 0;  // High prec to reduce round-off error in summing many terms
+  for (int ii=0; ii<np; ++ii) {
+    v = v + p0->uy;
+    ++p0;
+  }
+  return v/np;
+}
+
+// Compute vz moment on entire domain
+float ParticleArray::meanq_vz() {
+  particle_t* p0 = p;
+  double v = 0;  // High prec to reduce round-off error in summing many terms
+  for (int ii=0; ii<np; ++ii) {
+    v = v + p0->uz;
+    ++p0;
+  }
+  return v/np;
+}
+
+// Compute v^2 moment on entire domain
+float ParticleArray::meanq_vsq() {
+  particle_t* p0 = p;
+  double vsq = 0;  // High prec to reduce round-off error in summing many terms
+  for (int ii=0; ii<np; ++ii) {
+    vsq = vsq + ((p0->ux)*(p0->ux) + (p0->uy)*(p0->uy) + (p0->uz)*(p0->uz)) ;
+    ++p0;
+  }
+  return vsq/np;
 }

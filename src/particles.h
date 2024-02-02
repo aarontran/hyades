@@ -27,7 +27,11 @@ class ParticleArray {
     particle_t* p;
 
     void sort();
-    void maxwellian(float vth, int count, int rngseed);
+    void maxwellian(float vth, float vdrx, float vdry, float vdrz, int count, int rngseed);
+    float meanq_vx();
+    float meanq_vy();
+    float meanq_vz();
+    float meanq_vsq();
 
 };
 
