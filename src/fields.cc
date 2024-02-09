@@ -3,12 +3,19 @@
 #include "fields.h"
 
 // Constructor
-FieldArray::FieldArray(int nx_, int ny_, int nz_, int ng_) {
+FieldArray::FieldArray(int nx_, int ny_, int nz_, int ng_,
+                       float hx_, float hy_, float hz_, float dt_) {
   nx = nx_;
   ny = ny_;
   nz = nz_;
   ng = ng_;
   nv = (nx+2*ng) * (ny+2*ng) * (nz+2*ng);
+
+  hx = hx_;
+  hy = hy_;
+  hz = hz_;
+  dt = dt_;
+
   f = (field_t*) malloc( nv*sizeof(field_t) );
 }
 

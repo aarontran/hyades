@@ -2,6 +2,7 @@
 #include <omp.h>
 
 #include "fields.h"
+#include "interp.h"
 #include "params.h"
 #include "particles.h"
 #include "random.h"
@@ -18,23 +19,25 @@ int main(int argc, char* argv[]) {
 
   //Simulation* sim = Simulation(...);  // may need for checkpoints
   param_t        par;  // allocated on stack (not heap) for now...
-  //Grid*         gr = Grid(...);
-  FieldArray      fa = FieldArray(10, 10, 10, 1);
-  ParticleArray ions = ParticleArray(1, 1, 1000000, rng);
+  FieldArray      fa = FieldArray(10, 10, 10, 1, 1.0, 1.0, 1.0, 0.01);
+  InterpArray     ia = InterpArray(fa);
+  ParticleArray ions = ParticleArray(1, 1, 1000000, fa, ia, rng);
 
   double vth = 0.404;
 
   //sim->par  = par
-  //sim->grid = gr
   //sim->fa   = fa
   //sim->ions = ions
 
-  par.isort = 20;
-  par.idump = 100;
+  //par.isort = 20;
+  //par.idump = 100;
   par.last  = 1000;
 
   fa.uniform_b(1, 1, 1);
   fa.uniform_e(0, 0, 0);
+  //fa.update_ghost();  // TODO populate ghost cells
+
+  ia.update();  // Re-compute field interpolation coefficients
 
   ions.initialize(1000);  // index 0 to 999
   ions.maxwellian(  0,  500, vth,  600, 0, 0);
@@ -43,7 +46,7 @@ int main(int argc, char* argv[]) {
 
   // Set initial E/B values on grid
   // This requires deposition of ion moments
-  //field_advance(gr, fa, ions);
+  //field_advance(fa, ions);
 
   // --------------------------------------------------------------------------
   // Print basic information about data structures
@@ -65,6 +68,16 @@ int main(int argc, char* argv[]) {
   //printf("bx(0,0,0) is %f\n", f0->bx);
   //printf("bx(1,0,0) is %f\n", (f0+1)->bx);
   //printf("bx(2,0,0) is %f\n", (f0+2)->bx);
+
+  // Example: interpolation coefficient access
+  //interp_t* ic = ia.voxel(2,2,2);
+  //printf("interp at (2,2,2) got bx %f\n",    ic->bx);
+  //printf("interp at (2,2,2) got dbxdx %f\n", ic->dbxdx);
+  //printf("interp at (2,2,2) got dbxdy %f\n", ic->dbxdy);
+  //printf("interp at (2,2,2) got dbxdz %f\n", ic->dbxdz);
+  //printf("interp at (2,2,2) got d2bxdx %f\n", ic->d2bxdx);
+  //printf("interp at (2,2,2) got d2bxdy %f\n", ic->d2bxdy);
+  //printf("interp at (2,2,2) got d2bxdz %f\n", ic->d2bxdz);
 
   // Example: particle access
   //printf("total particles %d of max %d\n", ions.np, ions.npmax);
@@ -104,13 +117,13 @@ int main(int argc, char* argv[]) {
 
   while (step < par.last) {
 
-    if (step % par.isort == 0) {
-      ions.sort();
-    }
+    //if (step % par.isort == 0) {
+    //  ions.sort();
+    //}
 
-    //move(gr, fa, ions);
+    ions.move_boris();
 
-    //field_advance(gr, fa, ions);
+    //field_advance(fa, ions);
 
     step++;
 

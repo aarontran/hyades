@@ -1,6 +1,7 @@
 #ifndef PARTICLES_H
 #define PARTICLES_H
 
+#include "fields.h"
 #include "random.h"
 
 typedef struct particle {
@@ -18,13 +19,14 @@ typedef struct particle {
 class ParticleArray {
 
   public:
-    ParticleArray(float q_, float m_, int npmax_, Random rng_);
+    ParticleArray(float q_, float m_, int npmax_, FieldArray fa_,
+                  InterpArray ia_, Random rng_);
 
     float q;    // charge
     float m;    // mass
     int npmax;  // max number of particles
     int np;     // current number of particles
-    particle_t* p;
+    particle_t* p0;  // particle array pointer
 
     void sort();
     void initialize(int count);
@@ -35,8 +37,12 @@ class ParticleArray {
     float meanq_vz();
     float meanq_vsq();
 
+    void move_boris();
+
   private:
-    Random rng; // random number generator
+    FieldArray   fa;
+    InterpArray  ia;
+    Random      rng;
 
 };
 

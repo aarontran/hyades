@@ -14,16 +14,18 @@ typedef struct field {
 
 class FieldArray {
 
-  private:
-    int nx;
-    int ny;
-    int nz;
-    int ng;
-    int nv;
-
   public:
-    FieldArray(int nx_, int ny_, int nz_, int ng_);
+    FieldArray(int nx_, int ny_, int nz_, int ng_, float hx_, float hy_, float hz_, float dt_);
 
+    int nx;  // x-axis cell count (no ghosts)
+    int ny;  // y-axis ...
+    int nz;  // z-axis ...
+    int ng;  // ghost cell count, per coordinate axis, per side
+    int nv;  // total number of cells INCLUDING ghosts
+    float hx;  // cell size
+    float hy;
+    float hz;
+    float dt;  // simulation timestep
     field_t* f;
 
     field_t*      voxel(int ii, int jj, int kk);
