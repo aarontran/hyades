@@ -8,9 +8,9 @@ class Random {
   private:
     // Uniform RNG
     long long seed;
-    const long long m31   = 2147483647;  // Mersenne prime 2^31 - 1
-    const long long m31p1 = 2147483648;  // 2^31
-    const long long amult = 48271;
+    const static long long m31   = 2147483647;  // Mersenne prime 2^31 - 1
+    const static long long m31p1 = 2147483648;  // 2^31
+    const static long long amult = 48271;
 
   public:
     Random(int seed_);

@@ -1,6 +1,8 @@
 #ifndef PARTICLES_H
 #define PARTICLES_H
 
+#include "random.h"
+
 typedef struct particle {
   float  x,  y,  z;
   float ux, uy, uz;
@@ -15,10 +17,8 @@ typedef struct particle {
 
 class ParticleArray {
 
-  private:
-
   public:
-    ParticleArray(float q, float m, int npmax);
+    ParticleArray(float q_, float m_, int npmax_, Random rng_);
 
     float q;    // charge
     float m;    // mass
@@ -27,11 +27,16 @@ class ParticleArray {
     particle_t* p;
 
     void sort();
-    void maxwellian(float vth, float vdrx, float vdry, float vdrz, int count, int rngseed);
+    void initialize(int count);
+    void maxwellian(int i0, int i1, float vth, float vdrx, float vdry, float vdrz);
+    void uniform(int i0, int i1, float x0, float x1, float y0, float y1, float z0, float z1);
     float meanq_vx();
     float meanq_vy();
     float meanq_vz();
     float meanq_vsq();
+
+  private:
+    Random rng; // random number generator
 
 };
 
