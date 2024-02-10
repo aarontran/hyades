@@ -144,6 +144,36 @@ void InterpArray::update() {
       } // end for ii
     } // end for jj
   } // end for kk
+} // end InterpArray::update()
 
-
+// Interpolate field(s) to (x,y,z) location given by voxel + offsets.
+float InterpArray::exloc(interp_t* ic, float dx, float dy, float dz) {
+    return ( ic->ex + dx*( ic->dexdx + dx*ic->d2exdx )
+                    + dy*( ic->dexdy + dy*ic->d2exdy )
+                    + dz*( ic->dexdz + dz*ic->d2exdz ) );
+}
+float InterpArray::eyloc(interp_t* ic, float dx, float dy, float dz) {
+    return ( ic->ey + dx*( ic->deydx + dx*ic->d2eydx )
+                    + dy*( ic->deydy + dy*ic->d2eydy )
+                    + dz*( ic->deydz + dz*ic->d2eydz ) );
+}
+float InterpArray::ezloc(interp_t* ic, float dx, float dy, float dz) {
+    return ( ic->ez + dx*( ic->dezdx + dx*ic->d2ezdx )
+                    + dy*( ic->dezdy + dy*ic->d2ezdy )
+                    + dz*( ic->dezdz + dz*ic->d2ezdz ) );
+}
+float InterpArray::bxloc(interp_t* ic, float dx, float dy, float dz) {
+    return ( ic->bx + dx*( ic->dbxdx + dx*ic->d2bxdx )
+                    + dy*( ic->dbxdy + dy*ic->d2bxdy )
+                    + dz*( ic->dbxdz + dz*ic->d2bxdz ) );
+}
+float InterpArray::byloc(interp_t* ic, float dx, float dy, float dz) {
+    return ( ic->by + dx*( ic->dbydx + dx*ic->d2bydx )
+                    + dy*( ic->dbydy + dy*ic->d2bydy )
+                    + dz*( ic->dbydz + dz*ic->d2bydz ) );
+}
+float InterpArray::bzloc(interp_t* ic, float dx, float dy, float dz) {
+    return ( ic->bz + dx*( ic->dbzdx + dx*ic->d2bzdx )
+                    + dy*( ic->dbzdy + dy*ic->d2bzdy )
+                    + dz*( ic->dbzdz + dz*ic->d2bzdz ) );
 }

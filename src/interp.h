@@ -26,6 +26,14 @@ class InterpArray {
     interp_t* voxel(int ii, int jj, int kk);
     void      update();
 
+    // Interpolate field(s) to (x,y,z) location given by voxel + offsets.
+    float exloc(interp_t* ic, float dx, float dy, float dz);
+    float eyloc(interp_t* ic, float dx, float dy, float dz);
+    float ezloc(interp_t* ic, float dx, float dy, float dz);
+    float bxloc(interp_t* ic, float dx, float dy, float dz);
+    float byloc(interp_t* ic, float dx, float dy, float dz);
+    float bzloc(interp_t* ic, float dx, float dy, float dz);
+
 };
 
 #endif  // INTERP_H

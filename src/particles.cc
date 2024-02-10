@@ -81,9 +81,14 @@ void ParticleArray::uniform(int i0, int i1, float x0, float x1, float y0,
   }
   particle_t* p = &(p0[i0]);
   for (int ii=i0; ii<i1; ++ii) {
+    // global real coordinates
     p->x = x0 + (x1-x0)*rng.drand();
     p->y = y0 + (y1-y0)*rng.drand();
     p->z = z0 + (z1-z0)*rng.drand();
+    // convert to cell-centered grid coordinates
+    p->x = (p->x)/fa.hx + fa.ng - 0.5;
+    p->y = (p->y)/fa.hy + fa.ng - 0.5;
+    p->z = (p->z)/fa.hz + fa.ng - 0.5;
     ++p;
   }
 }

@@ -24,6 +24,10 @@ MPI communication is a big job.
 
 Convention: typedef structs have `_t` lowercase, classes use CamelCase.
 
+Some design principles:
+* interpolator = holds coefficients + stencils for how to map fields to
+  particles, so that we can easily swap in/out different interpolation schemes.
+
 
 About Hyades
 ------------

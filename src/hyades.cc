@@ -14,42 +14,49 @@ int main(int argc, char* argv[]) {
 
   // --------------------------------------------------------------------------
   // Initialization - physics
-  // Eventually, let user customize using arbitrary code blocks via macros
 
-  Random rng = Random(1);  // choose random seed
-
-  //Simulation* sim = Simulation(...);  // may need for checkpoints
   param_t        par;  // allocated on stack (not heap) for now...
-  FieldArray      fa = FieldArray(10, 20, 30, 2,  // nx,ny,nz,ng
-                                  1.0, 1.0, 1.0, 0.01);  // dx,dx,dz,dt
-  InterpArray     ia = InterpArray(fa);
-  ParticleArray ions = ParticleArray(1, 1, 1000000, fa, ia, rng);
-
-  double vth = 0.404;
-
-  //sim->par  = par
-  //sim->fa   = fa
-  //sim->ions = ions
-
-  //par.isort = 20;
   //par.idump = 100;
-  par.last  = 1000;
+  //par.isort = 20;
+  par.ilast = 100;
+  par.Lx = 10;
+  par.Ly = 10;
+  par.Lz = 10;
+  par.nx = 10;
+  par.ny = 10;
+  par.nz = 10;
+  par.seed = 1;
 
-  fa.freset(0);
+  Random         rng = Random(par.seed);
+  FieldArray      fa = FieldArray(par.nx, par.ny, par.ny, 2,  // nx,ny,nz,ng
+                                  par.Lx/par.nx,  // hx
+                                  par.Ly/par.ny,  // hy
+                                  par.Lz/par.nz,  // hz
+                                  0.01);  // dt
+  InterpArray     ia = InterpArray(fa);
+  ParticleArray ions = ParticleArray(1, 1, 1000, fa, ia, rng);
+
+  double vth = 0.404 * 1e-1;
+
+  //fa.freset(0);
   fa.uniform_b(1, 1, 1);
   fa.uniform_e(0, 0, 0);
-  fa.update_ghost();  // populate ghost cells
+  fa.update_ghost();  // populate ghost cells; don't implement partial updates b/c too painful
 
   ia.update();  // Re-compute field interpolation coefficients
 
-  ions.initialize(1000);  // index 0 to 999
-  ions.maxwellian(  0,  500, vth,  600, 0, 0);
-  ions.maxwellian(500, 1000, vth, -300, 0, 0);
-  ions.uniform(0, 1000, -5, 5, -5, 5, -5, 5);
+  ions.initialize(10);  // index 0 to 9
+  ions.maxwellian(0, 10, vth, 0, 0, 0);
+  ions.uniform(0, 10, 0., par.Lx, 0., par.Ly, 0., par.Lz);
 
   // Set initial E/B values on grid
   // This requires deposition of ion moments
   //field_advance(fa, ions);
+
+  //Simulation* sim = Simulation(...);  // may want for checkpoints eventually
+  //sim->par  = par
+  //sim->fa   = fa
+  //sim->ions = ions
 
   // --------------------------------------------------------------------------
   // Print basic information about data structures
@@ -61,10 +68,10 @@ int main(int argc, char* argv[]) {
   //printf("voxel(2,0,0) is %p\n", fa.voxel(2,0,0));
 
   // Example: field access via voxel indexing
-  //printf("bx(0,0,0) is %f\n", fa.voxel(0,0,0)->bx);
-  //printf("bx(1,0,0) is %f\n", fa.voxel(1,0,0)->bx);
-  //printf("bx(2,0,0) is %f\n", fa.voxel(2,0,0)->bx);
-  //printf("bx(11,11,11) is %f\n", fa.voxel(11,11,11)->bx);
+  printf("bx(0,0,0) is %f\n", fa.voxel(0,0,0)->bx);
+  printf("bx(1,0,0) is %f\n", fa.voxel(1,0,0)->bx);
+  printf("bx(2,0,0) is %f\n", fa.voxel(2,0,0)->bx);
+  printf("bx(11,11,11) is %f\n", fa.voxel(11,11,11)->bx);
 
   // Example: field access via pointer arithmetic
   //field_t* f = fa.voxel(0,0,0);
@@ -92,14 +99,6 @@ int main(int argc, char* argv[]) {
   //printf("p(0)->uz is %f\n", ions.p->uz);
   //printf("p(0)->ind is %d\n", ions.p->ind);
 
-  //printf("p(1)->x is %f\n", (&ions.p[1])->x);
-  //printf("p(1)->y is %f\n", (&ions.p[1])->y);
-  //printf("p(1)->z is %f\n", (&ions.p[1])->z);
-  //printf("p(1)->ux is %f\n", (&ions.p[1])->ux);
-  //printf("p(1)->uy is %f\n", (&ions.p[1])->uy);
-  //printf("p(1)->uz is %f\n", (&ions.p[1])->uz);
-  //printf("p(1)->ind is %d\n", (&ions.p[1])->ind);
-
   //printf("np is %d\n", ions.np);
   //printf("p(np-1)->x is %f\n", (&ions.p[ions.np-1])->x);
   //printf("p(np-1)->y is %f\n", (&ions.p[ions.np-1])->y);
@@ -118,11 +117,18 @@ int main(int argc, char* argv[]) {
   // Evolution
   int step = 0;
 
-  while (step < par.last) {
+  while (step < par.ilast) {
 
     //if (step % par.isort == 0) {
     //  ions.sort();
     //}
+
+    printf(
+      "step %d p[0] ind %d; w = %f; x,y,z = %f,%f,%f; ux,uy,uz = %f,%f,%f\n",
+      step, (ions.p0[0]).ind, (ions.p0[0]).w,
+      (ions.p0[0]).x,(ions.p0[0]).y,(ions.p0[0]).z,
+      (ions.p0[0]).ux,(ions.p0[0]).uy,(ions.p0[0]).uz
+    );
 
     ions.move_boris();
 
