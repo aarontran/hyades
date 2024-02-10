@@ -1,3 +1,4 @@
+#include <stdlib.h>  // for malloc, free
 #include <stdio.h>  // for printf
 #include <omp.h>
 
@@ -132,6 +133,21 @@ int main(int argc, char* argv[]) {
     //}
 
   }
+
+  printf("ions array %p\n", ions.p0);
+  printf("interp array %p\n", ia.ic0);
+  printf("field array %p\n", fa.f);
+
+  printf("ions array %f\n", ions.p0[10].x);
+  printf("interp array %f\n", ia.ic0[10].dbxdx);
+  printf("field array %f\n", fa.f[10].bx);
+
+  // Pointers malloc'ed in class constructors cannot be freed in main?
+  // clang compiler says "pointer being freed was not allocated"
+  // don't understand why this doesn't work --ATr,2024feb10
+  //free(ions.p0);
+  //free(ia.ic0);
+  //free(fa.f);
 
   return 0;
 }
