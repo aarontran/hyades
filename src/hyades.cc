@@ -20,7 +20,8 @@ int main(int argc, char* argv[]) {
 
   //Simulation* sim = Simulation(...);  // may need for checkpoints
   param_t        par;  // allocated on stack (not heap) for now...
-  FieldArray      fa = FieldArray(10, 10, 10, 1, 1.0, 1.0, 1.0, 0.01);
+  FieldArray      fa = FieldArray(10, 10, 10, 2,  // nx,ny,nz,ng
+                                  1.0, 1.0, 1.0, 0.01);  // dx,dx,dz,dt
   InterpArray     ia = InterpArray(fa);
   ParticleArray ions = ParticleArray(1, 1, 1000000, fa, ia, rng);
 
@@ -34,6 +35,7 @@ int main(int argc, char* argv[]) {
   //par.idump = 100;
   par.last  = 1000;
 
+  fa.freset(0);
   fa.uniform_b(1, 1, 1);
   fa.uniform_e(0, 0, 0);
   //fa.update_ghost();  // TODO populate ghost cells
@@ -65,10 +67,10 @@ int main(int argc, char* argv[]) {
   //printf("bx(11,11,11) is %f\n", fa.voxel(11,11,11)->bx);
 
   // Example: field access via pointer arithmetic
-  //field_t* f0 = fa.voxel(0,0,0);
-  //printf("bx(0,0,0) is %f\n", f0->bx);
-  //printf("bx(1,0,0) is %f\n", (f0+1)->bx);
-  //printf("bx(2,0,0) is %f\n", (f0+2)->bx);
+  //field_t* f = fa.voxel(0,0,0);
+  //printf("bx(0,0,0) is %f\n", f->bx);
+  //printf("bx(1,0,0) is %f\n", (f+1)->bx);
+  //printf("bx(2,0,0) is %f\n", (f+2)->bx);
 
   // Example: interpolation coefficient access
   //interp_t* ic = ia.voxel(2,2,2);
@@ -136,11 +138,11 @@ int main(int argc, char* argv[]) {
 
   printf("ions array %p\n", ions.p0);
   printf("interp array %p\n", ia.ic0);
-  printf("field array %p\n", fa.f);
+  printf("field array %p\n", fa.f0);
 
   printf("ions array %f\n", ions.p0[10].x);
   printf("interp array %f\n", ia.ic0[10].dbxdx);
-  printf("field array %f\n", fa.f[10].bx);
+  printf("field array %f\n", fa.f0[10].bx);
 
   // Pointers malloc'ed in class constructors cannot be freed in main?
   // clang compiler says "pointer being freed was not allocated"
