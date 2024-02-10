@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdlib.h>  // for malloc
+//#include <stdio.h>  // for printf
 
 #include "fields.h"
 
@@ -116,15 +117,68 @@ void FieldArray::update_ghost() {
   field_t* local;
   field_t* remote;
 
-  // Start by updating slabs
+  // The cell indexing scheme is:
+  //     ghost = [    0,      ng-1] = [    0,      ng)
+  //     live  = [   ng, nx+  ng-1] = [   ng, nx+  ng)
+  //     ghost = [nx+ng, nx+2*ng-1] = [nx+ng, nx+2*ng)
+  // where bracket=inclusive, parens=exclusive range bounds.
+  // Example: for 10 live and 2 ghost cells,
+  // indices 0-1 ghost, 2-11 live, 12-13 ghost.
 
-  // Left x slab <- right, no corners
-//  for (int kk=ng; kk < (nz+ng); ++kk) {
-//  for (int jj=ng; jj < (ny+ng); ++jj) {
-//  for (int ii= 0; ii <     ng ; ++ii) {
-//    local  = voxel(ii,             jj, kk);
-//    remote = voxel((nx+ng-1)-ii,   jj, kk);
-//    fcpy(local, remote);
-//  }}}
+  // Left x slab <- right
+  for (int kk=(   ng); kk < (nz+  ng); ++kk) {
+  for (int jj=(   ng); jj < (ny+  ng); ++jj) {
+  for (int ii=(    0); ii < (     ng); ++ii) {
+    //if ((jj==ng)&&(kk==ng)) printf("Left x slab %d <- %d\n", ii, nx+ii);
+    local  = voxel(   ii, jj, kk);
+    remote = voxel(nx+ii, jj, kk);
+    fcopy(local, remote);
+  }}}
+  // Left y slab <- right
+  for (int kk=(   ng); kk < (nz+  ng); ++kk) {
+  for (int jj=(    0); jj < (     ng); ++jj) {
+  for (int ii=(   ng); ii < (nx+  ng); ++ii) {
+    //if ((ii==ng)&&(kk==ng)) printf("Left y slab %d <- %d\n", jj, ny+jj);
+    local  = voxel(ii,    jj, kk);
+    remote = voxel(ii, ny+jj, kk);
+    fcopy(local, remote);
+  }}}
+  // Left z slab <- right
+  for (int kk=(    0); kk < (     ng); ++kk) {
+  for (int jj=(   ng); jj < (ny+  ng); ++jj) {
+  for (int ii=(   ng); ii < (nx+  ng); ++ii) {
+    //if ((ii==ng)&&(jj==ng)) printf("Left z slab %d <- %d\n", kk, nz+kk);
+    local  = voxel(ii, jj,    kk);
+    remote = voxel(ii, jj, nz+kk);
+    fcopy(local, remote);
+  }}}
+
+  // Right x slab <- left
+  for (int kk=(   ng); kk < (nz+  ng); ++kk) {
+  for (int jj=(   ng); jj < (ny+  ng); ++jj) {
+  for (int ii=(    0); ii < (     ng); ++ii) {
+    //if ((jj==ng)&&(kk==ng)) printf("Right x slab %d <- %d\n", nx+ng+ii, ng+ii);
+    local  = voxel(nx+ng+ii, jj, kk);
+    remote = voxel(   ng+ii, jj, kk);
+    fcopy(local, remote);
+  }}}
+  // Right y slab <- left
+  for (int kk=(   ng); kk < (nz+  ng); ++kk) {
+  for (int jj=(    0); jj < (     ng); ++jj) {
+  for (int ii=(   ng); ii < (nx+  ng); ++ii) {
+    //if ((ii==ng)&&(kk==ng)) printf("Right y slab %d <- %d\n", ny+ng+jj, ng+jj);
+    local  = voxel(ii, ny+ng+jj, kk);
+    remote = voxel(ii,    ng+jj, kk);
+    fcopy(local, remote);
+  }}}
+  // Right z slab <- left
+  for (int kk=(    0); kk < (     ng); ++kk) {
+  for (int jj=(   ng); jj < (ny+  ng); ++jj) {
+  for (int ii=(   ng); ii < (nx+  ng); ++ii) {
+    //if ((ii==ng)&&(jj==ng)) printf("Right z slab %d <- %d\n", nz+ng+kk, ng+kk);
+    local  = voxel(ii, jj, nz+ng+kk);
+    remote = voxel(ii, jj,    ng+kk);
+    fcopy(local, remote);
+  }}}
 
 }

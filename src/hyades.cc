@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
 
   //Simulation* sim = Simulation(...);  // may need for checkpoints
   param_t        par;  // allocated on stack (not heap) for now...
-  FieldArray      fa = FieldArray(10, 10, 10, 2,  // nx,ny,nz,ng
+  FieldArray      fa = FieldArray(10, 20, 30, 2,  // nx,ny,nz,ng
                                   1.0, 1.0, 1.0, 0.01);  // dx,dx,dz,dt
   InterpArray     ia = InterpArray(fa);
   ParticleArray ions = ParticleArray(1, 1, 1000000, fa, ia, rng);
@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
   fa.freset(0);
   fa.uniform_b(1, 1, 1);
   fa.uniform_e(0, 0, 0);
-  //fa.update_ghost();  // TODO populate ghost cells
+  fa.update_ghost();  // populate ghost cells
 
   ia.update();  // Re-compute field interpolation coefficients
 
