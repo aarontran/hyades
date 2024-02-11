@@ -26,7 +26,8 @@ class FieldArray {
     int ny;  // y-axis ...
     int nz;  // z-axis ...
     int ng;  // ghost cell count, per coordinate axis, per side
-    int nv;  // total number of cells INCLUDING ghosts
+    int nvall;  // total number of cells INCLUDING ghosts
+    int nvg;  // total number of ghost cells (corners and slabs)
     float hx;  // cell size
     float hy;
     float hz;

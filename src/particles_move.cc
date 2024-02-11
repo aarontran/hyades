@@ -143,9 +143,19 @@ void ParticleArray::move_deposit() {
   // as to effectively exception lists for particles crossing CELL boundaries,
   // not just GRID boundaries.
   //
+  // Deposit before teleport, how to make it work?
   // Use TWO ghost cells instead of ONE.
   // That way, any particle crossing off grid edge can still deposit, we don't
   // need to clobber...
+  //
+  // Teleport then deposit?  Would that work better?
+  //   For NGP + QS shapes, then only need one ghost cell and don't need
+  //   corner ghosts so a little easier to do communication.
+  // With other higher-order shapes, you need to deposit in corners regardless
+  // of whether you teleport before or after the deposit.
+  //
+  // Not obvious to me whether deposit->teleport or teleport->deposit is
+  // better.  Shouldn't matter if you are careful.
   //
   // For my use case, I think it's best to split the loops so the mover
   // can be easily vectorized; the deposit is hard to vectorize without

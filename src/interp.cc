@@ -8,7 +8,7 @@
 InterpArray::InterpArray(FieldArray fa_) :
   fa(fa_)
 {
-  ic0 = (interp_t*) malloc( fa.nv*sizeof(interp_t) );
+  ic0 = (interp_t*) malloc( fa.nvall*sizeof(interp_t) );
   return;
 }
 

@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <stdlib.h>  // for malloc
-//#include <stdio.h>  // for printf
+#include <stdio.h>  // for printf
 
 #include "fields.h"
 
@@ -11,7 +11,8 @@ FieldArray::FieldArray(int nx_, int ny_, int nz_, int ng_,
   ny = ny_;
   nz = nz_;
   ng = ng_;
-  nv = (nx+2*ng) * (ny+2*ng) * (nz+2*ng);
+  nvall = (nx+2*ng) * (ny+2*ng) * (nz+2*ng);
+  nvg   = nvall - (nx*ny*nz);
 
   hx = hx_;
   hy = hy_;
@@ -22,7 +23,7 @@ FieldArray::FieldArray(int nx_, int ny_, int nz_, int ng_,
   // standard that I think this check is worthwhile
   assert(sizeof(field_t) == 4*nfstruct);
 
-  f0 = (field_t*) malloc( nv*sizeof(field_t) );
+  f0 = (field_t*) malloc( nvall*sizeof(field_t) );
 }
 
 // ----------------------------------------------------------------------------
@@ -73,7 +74,7 @@ void FieldArray::fcopy(field_t* ff, field_t* gg) {
 // (including ghost corners), meant for testing and debugging.
 void FieldArray::freset(float v) {
   field_t* ff = f0;
-  for (int ii=0; ii < nv; ++ii) {
+  for (int ii=0; ii < nvall; ++ii) {
     for (int nn = 0; nn < nfstruct; ++nn) {
       *(fget(ff,nn)) = v;
     }

@@ -139,6 +139,10 @@ int main(int argc, char* argv[]) {
 
     //if (step % par.isort == 0) ions.sort();
 
+    // TODO fill ghost cells for E/B required before interp
+    // I think better to display the ghost cell filling/resetting operations
+    // all at the top level b/c important for evolution loop understanding.
+
     // update field interpolation coefficients
     ia.update();
 
