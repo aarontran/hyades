@@ -19,21 +19,21 @@ int main(int argc, char* argv[]) {
   param_t        par;  // allocated on stack (not heap) for now...
   //par.idump = 100;
   //par.isort = 20;
-  par.ilast = 40;
+  par.ilast = 10;
   par.Lx = 10;
   par.Ly = 10;
   par.Lz = 10;
-  //par.nx = 10;
-  //par.ny = 10;
-  //par.nz = 10;
-  par.nx =  5;  // for ghost cell testing
+  par.nx = 10;
   par.ny = 10;
-  par.nz = 20;
+  par.nz = 10;
+  //par.nx =  5;  // for ghost cell testing
+  //par.ny = 10;
+  //par.nz = 20;
   par.ng =  2;  // number of ghost cells
   par.seed = 1;  // zero-th particle gets teleported so useful test case
 
-  par.nppc  = 10;  // total 10,000 particles...
-  par.npmax = 20000;
+  par.nppc  = 100;
+  par.npmax = 200000;
 
 
   // WARNING: my particle deposit scheme requires 2 ghost cells
@@ -56,8 +56,8 @@ int main(int argc, char* argv[]) {
   fa.mesh_set_b(1, 1, 1);
   fa.mesh_set_e(0, 0, 0);
 
-  ions.initialize(npart);  // index 0 to 9
-  ions.maxwellian(0, npart, vth, 0, 0, 0);
+  ions.initialize(npart);
+  ions.maxwellian(0, npart, vth, 10., 0, 0);
   ions.uniform(0, npart, 0., par.Lx, 0., par.Ly, 0., par.Lz);
 
   // Set initial E/B values on grid
@@ -150,6 +150,8 @@ int main(int argc, char* argv[]) {
     // update field interpolation coefficients
     ia.update();
 
+    fa.mesh_set_jrho(0., 0., 0., 0.);
+
     // particles advance to r(t=n+1), v(t=n+1/2);
     // deposit charge, current at n(t=n+1/2), j(t=n+1/2);
     // teleport across periodic grid boundaries
@@ -158,7 +160,7 @@ int main(int argc, char* argv[]) {
     //ions.smooth();
 
     // update ghost cells for particle currents
-    //fa.unload_ghost(...);
+    fa.ghost_deposit_jrho();
 
     // fields advance to B(t=n+1), E(t=n+1)
     //fa.advance_b(ions);
@@ -173,10 +175,10 @@ int main(int argc, char* argv[]) {
 
   printf("interp array dbxdx %f\n", ia.voxel(3,3,3)->dbxdx);
   printf("field array bx %f\n", fa.voxel(5,5,5)->bx);
-  printf("field array jfx %f\n", fa.voxel(5,5,5)->jfx);
-  printf("field array jfy %f\n", fa.voxel(5,5,5)->jfy);
-  printf("field array jfz %f\n", fa.voxel(5,5,5)->jfz);
-  printf("field array rhof %f\n", fa.voxel(5,5,5)->rhof);
+  printf("field array jfx %f\n", fa.voxel(2,2,2)->jfx);
+  printf("field array jfy %f\n", fa.voxel(2,2,2)->jfy);
+  printf("field array jfz %f\n", fa.voxel(2,2,2)->jfz);
+  printf("field array rhof %f\n",fa.voxel(2,2,2)->rhof);
 
   // Pointers malloc'ed in class constructors cannot be freed in main?
   // clang compiler says "pointer being freed was not allocated"

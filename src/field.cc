@@ -152,3 +152,32 @@ void FieldArray::mesh_set_e(float ex, float ey, float ez) {
     ff->ez = ez;
   }}}
 }
+
+// Set j/rho fields to a uniform value, including ghost cells
+void FieldArray::mesh_set_jrho(float jx, float jy, float jz, float rho) {
+  for (int kk = 0; kk < (nz+2*ng); ++kk) {
+  for (int jj = 0; jj < (ny+2*ng); ++jj) {
+  for (int ii = 0; ii < (nx+2*ng); ++ii) {
+    field_t* ff = voxel(ii,jj,kk);
+    ff->jfx = jx;
+    ff->jfy = jy;
+    ff->jfz = jz;
+    ff->rhof = rho;
+  }}}
+}
+
+// Add all ghost cell values of (j, rho) to existing values on grid.
+void FieldArray::ghost_deposit_jrho() {
+  int* ivghost = ivoxels_ghost;
+  int* ivghsrc = ivoxels_ghsrc;
+  for (int ii = 0; ii < nvg; ++ii) {
+    field_t* gh  = &( f0[*ivghost] );
+    field_t* src = &( f0[*ivghsrc] );
+    src->jfx  += gh-> jfx;
+    src->jfy  += gh-> jfy;
+    src->jfz  += gh-> jfz;
+    src->rhof += gh-> rhof;
+    ++ivghost;
+    ++ivghsrc;
+  }
+}

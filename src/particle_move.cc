@@ -12,6 +12,7 @@ void ParticleArray::move_deposit() {
   const float three          = 3.;
   const float one_third      = 1./3.;
   const float one_half       = 1./2.;
+  const float one_twelfth    = 1./12.;
   const float two_fifteenths = 2./15.;
   const float cdt_dx         = fa.dt/fa.hx;  // implicit c=1 in c*dt/dx
   const float cdt_dy         = fa.dt/fa.hy;
@@ -179,16 +180,17 @@ void ParticleArray::move_deposit() {
     float v1 = two*(ymh - iy);
     float v2 = two*(zmh - iz);
 
-    float q = p->w * qsp;
+    float qw = qsp * p->w * one_twelfth;
 
     // Ari's quadratic spline deposit scheme
-    float w0 =  q*two*( three - v0*v0 - v1*v1 - v2*v2 );
-    float wx =  q*( v0 + one )*( v0 + one );
-    float wy =  q*( v1 + one )*( v1 + one );
-    float wz =  q*( v2 + one )*( v2 + one );
-    float wmx = q*( v0 - one )*( v0 - one );
-    float wmy = q*( v1 - one )*( v1 - one );
-    float wmz = q*( v2 - one )*( v2 - one );
+    // weights sum to 1, without the factor of q
+    float w0 =  qw*two*( three - v0*v0 - v1*v1 - v2*v2 );
+    float wx =  qw*( v0 + one )*( v0 + one );
+    float wy =  qw*( v1 + one )*( v1 + one );
+    float wz =  qw*( v2 + one )*( v2 + one );
+    float wmx = qw*( v0 - one )*( v0 - one );
+    float wmy = qw*( v1 - one )*( v1 - one );
+    float wmz = qw*( v2 - one )*( v2 - one );
 
     if (ip == 0) {
       printf("depst ind %d xmh %f %f %f uxyz %f %f %f . . . ixmh %d %d %d v012 %f %f %f weights %f %f %f %f %f %f %f\n",

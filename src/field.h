@@ -80,14 +80,15 @@ class FieldArray {
 
     // --------------------------------------------------
     // High-level methods to set field values on the mesh
-    void mesh_set_b(float bx, float by, float bz);
-    void mesh_set_e(float ex, float ey, float ez);
+    void mesh_set_b   (float bx, float by, float bz);
+    void mesh_set_e   (float ex, float ey, float ez);
+    void mesh_set_jrho(float jx, float jy, float jz, float rho);
 
     //void ghost_set_eb      (float v);  // not implemented
     //void ghost_set_jrho    (float v);
     //void ghost_copy_eb     ();
     //void ghost_copy_jrho   ();
-    //void ghost_reduce_jrho ();
+    void ghost_deposit_jrho();
 
 };
 
