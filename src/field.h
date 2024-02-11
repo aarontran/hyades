@@ -86,8 +86,8 @@ class FieldArray {
 
     //void ghost_set_eb      (float v);  // not implemented
     //void ghost_set_jrho    (float v);
-    //void ghost_copy_eb     ();
-    //void ghost_copy_jrho   ();
+    void ghost_copy_eb     ();
+    void ghost_copy_jrho   ();
     void ghost_deposit_jrho();
 
 };

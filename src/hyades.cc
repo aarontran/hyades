@@ -145,16 +145,14 @@ int main(int argc, char* argv[]) {
 
     //if (step % par.isort == 0) ions.sort();  // not implemented
 
-    // TODO fill ghost cells for E/B required before interp
-    // I think better to display the ghost cell filling/resetting operations
-    // all at the top level b/c important for evolution loop understanding.
-
     // prepare for particle advance
     fa.mesh_set_jrho(0., 0., 0., 0.);
+    fa.ghost_copy_eb();             // update E/B in ghosts
     ia.update();                    // compute E/B field interpolation coeffs
 
     ions.move_deposit();            // r,v advanced
-    fa.ghost_deposit_jrho();        // j advanced
+    fa.ghost_deposit_jrho();
+    fa.ghost_copy_jrho();           // j advanced
     //fa.smooth_jrho();             // not implemented
 
     //fa.advance_b(ions);           // E,B advanced  // not implemented

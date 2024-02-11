@@ -166,6 +166,40 @@ void FieldArray::mesh_set_jrho(float jx, float jy, float jz, float rho) {
   }}}
 }
 
+// Copy E/B fields from live cells to ghost cells; overwrite old ghosts
+void FieldArray::ghost_copy_eb() {
+  int* ivghost = ivoxels_ghost;
+  int* ivghsrc = ivoxels_ghsrc;
+  for (int ii = 0; ii < nvg; ++ii) {
+    field_t* gh  = &( f0[*ivghost] );
+    field_t* src = &( f0[*ivghsrc] );
+    gh->ex = src->ex;
+    gh->ey = src->ey;
+    gh->ez = src->ez;
+    gh->bx = src->bx;
+    gh->by = src->by;
+    gh->bz = src->bz;
+    ++ivghost;
+    ++ivghsrc;
+  }
+}
+
+// Copy j/rho fields from live cells to ghost cells; overwrite old ghosts
+void FieldArray::ghost_copy_jrho() {
+  int* ivghost = ivoxels_ghost;
+  int* ivghsrc = ivoxels_ghsrc;
+  for (int ii = 0; ii < nvg; ++ii) {
+    field_t* gh  = &( f0[*ivghost] );
+    field_t* src = &( f0[*ivghsrc] );
+    gh->jfx  = src->jfx;
+    gh->jfy  = src->jfy;
+    gh->jfz  = src->jfz;
+    gh->rhof = src->rhof;
+    ++ivghost;
+    ++ivghsrc;
+  }
+}
+
 // Add all ghost cell values of (j, rho) to existing values on grid.
 void FieldArray::ghost_deposit_jrho() {
   int* ivghost = ivoxels_ghost;
