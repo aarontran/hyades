@@ -19,11 +19,11 @@ typedef struct particle {
 class ParticleArray {
 
   public:
-    ParticleArray(float q_, float m_, int npmax_, FieldArray fa_,
+    ParticleArray(float qsp_, float msp_, int npmax_, FieldArray fa_,
                   InterpArray ia_, Random rng_);
 
-    float q;    // charge
-    float m;    // mass
+    float qsp;  // charge
+    float msp;  // mass
     int npmax;  // max number of particles
     int np;     // current number of particles
     particle_t* p0;  // particle array pointer
@@ -37,7 +37,7 @@ class ParticleArray {
     float meanq_vz();
     float meanq_vsq();
 
-    void move_boris();
+    void move_deposit();
 
   private:
     FieldArray   fa;

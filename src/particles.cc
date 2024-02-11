@@ -15,10 +15,10 @@
 // Otherwise C++ tries to call a default constructor which I haven't
 // provided...
 // https://stackoverflow.com/q/31488756
-ParticleArray::ParticleArray(float q_, float m_, int npmax_, FieldArray fa_,
+ParticleArray::ParticleArray(float qsp_, float msp_, int npmax_, FieldArray fa_,
                              InterpArray ia_, Random rng_
 ):
-  q(q_), m(m_), npmax(npmax_), fa(fa_), ia(ia_), rng(rng_)
+  qsp(qsp_), msp(msp_), npmax(npmax_), fa(fa_), ia(ia_), rng(rng_)
 {
   //q = q_;
   //m = m_;

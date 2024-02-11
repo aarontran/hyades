@@ -18,36 +18,43 @@ int main(int argc, char* argv[]) {
   param_t        par;  // allocated on stack (not heap) for now...
   //par.idump = 100;
   //par.isort = 20;
-  par.ilast = 100;
+  par.ilast = 40;
   par.Lx = 10;
   par.Ly = 10;
   par.Lz = 10;
   par.nx = 10;
   par.ny = 10;
   par.nz = 10;
-  par.seed = 1;
+  par.seed = 1;  // zero-th particle gets teleported so useful test case
+
+  par.nppc  = 10;  // total 10,000 particles...
+  par.npmax = 20000;
+
+
+  // WARNING: my particle deposit scheme requires 2 ghost cells
+  // so that move+deposit can all be done without any particle aliasing
+  // across boundaries
 
   Random         rng = Random(par.seed);
   FieldArray      fa = FieldArray(par.nx, par.ny, par.ny, 2,  // nx,ny,nz,ng
                                   par.Lx/par.nx,  // hx
                                   par.Ly/par.ny,  // hy
                                   par.Lz/par.nz,  // hz
-                                  0.01);  // dt
+                                  0.001);  // dt
   InterpArray     ia = InterpArray(fa);
-  ParticleArray ions = ParticleArray(1, 1, 1000, fa, ia, rng);
+  ParticleArray ions = ParticleArray(1, 1, par.npmax, fa, ia, rng);
 
-  double vth = 0.404 * 1e-1;
+  double vth = 0.404;
+  int npart = par.nppc*(par.nx*par.ny*par.nz);
 
-  //fa.freset(0);
+  fa.freset(0);
   fa.uniform_b(1, 1, 1);
   fa.uniform_e(0, 0, 0);
   fa.update_ghost();  // populate ghost cells; don't implement partial updates b/c too painful
 
-  ia.update();  // Re-compute field interpolation coefficients
-
-  ions.initialize(10);  // index 0 to 9
-  ions.maxwellian(0, 10, vth, 0, 0, 0);
-  ions.uniform(0, 10, 0., par.Lx, 0., par.Ly, 0., par.Lz);
+  ions.initialize(npart);  // index 0 to 9
+  ions.maxwellian(0, npart, vth, 0, 0, 0);
+  ions.uniform(0, npart, 0., par.Lx, 0., par.Ly, 0., par.Lz);
 
   // Set initial E/B values on grid
   // This requires deposition of ion moments
@@ -115,40 +122,53 @@ int main(int argc, char* argv[]) {
 
   // --------------------------------------------------------------------------
   // Evolution
+
   int step = 0;
 
   while (step < par.ilast) {
 
-    //if (step % par.isort == 0) {
-    //  ions.sort();
-    //}
+    // fields at B(t=n), E(t=n)
+    // particle at r(t=n), v(t=n-1/2)
 
-    printf(
-      "step %d p[0] ind %d; w = %f; x,y,z = %f,%f,%f; ux,uy,uz = %f,%f,%f\n",
-      step, (ions.p0[0]).ind, (ions.p0[0]).w,
-      (ions.p0[0]).x,(ions.p0[0]).y,(ions.p0[0]).z,
-      (ions.p0[0]).ux,(ions.p0[0]).uy,(ions.p0[0]).uz
-    );
+    //printf(
+    //  "step %d p[0] ind %d; w = %f; x,y,z = %f,%f,%f; ux,uy,uz = %f,%f,%f\n",
+    //  step, (ions.p0[0]).ind, (ions.p0[0]).w,
+    //  (ions.p0[0]).x,(ions.p0[0]).y,(ions.p0[0]).z,
+    //  (ions.p0[0]).ux,(ions.p0[0]).uy,(ions.p0[0]).uz
+    //);
 
-    ions.move_boris();
+    //if (step % par.isort == 0) ions.sort();
 
-    //field_advance(fa, ions);
+    // update field interpolation coefficients
+    ia.update();
+
+    // particles advance to r(t=n+1), v(t=n+1/2);
+    // deposit charge, current at n(t=n+1/2), j(t=n+1/2);
+    // teleport across periodic grid boundaries
+    ions.move_deposit();
+    // smooth deposited particle moments if needed
+    //ions.smooth();
+
+    // update ghost cells for particle currents
+    //fa.unload_ghost(...);
+
+    // fields advance to B(t=n+1), E(t=n+1)
+    //fa.advance_b(ions);
+    // smooth deposited fields if needed
+    //fa.smooth();
 
     step++;
 
-    //if (step % par->idump == 0) {
-    //  diagnostics(sim);
-    //}
+    //if (step % par->idump == 0) diagnostics();
 
   }
 
-  printf("ions array %p\n", ions.p0);
-  printf("interp array %p\n", ia.ic0);
-  printf("field array %p\n", fa.f0);
-
-  printf("ions array %f\n", ions.p0[10].x);
-  printf("interp array %f\n", ia.ic0[10].dbxdx);
-  printf("field array %f\n", fa.f0[10].bx);
+  printf("interp array dbxdx %f\n", ia.voxel(3,3,3)->dbxdx);
+  printf("field array bx %f\n", fa.voxel(5,5,5)->bx);
+  printf("field array jfx %f\n", fa.voxel(5,5,5)->jfx);
+  printf("field array jfy %f\n", fa.voxel(5,5,5)->jfy);
+  printf("field array jfz %f\n", fa.voxel(5,5,5)->jfz);
+  printf("field array rhof %f\n", fa.voxel(5,5,5)->rhof);
 
   // Pointers malloc'ed in class constructors cannot be freed in main?
   // clang compiler says "pointer being freed was not allocated"

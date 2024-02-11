@@ -12,9 +12,12 @@ typedef struct param {
   float Ly;
   float Lz;
 
-  float nx;
-  float ny;
-  float nz;
+  int nx;
+  int ny;
+  int nz;
+
+  int npmax;
+  int nppc;
 
 } param_t;
 

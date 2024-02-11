@@ -27,6 +27,7 @@ class InterpArray {
     void      update();
 
     // Interpolate field(s) to (x,y,z) location given by voxel + offsets.
+    // Voxel offsets dx,dy,dz are within interval [-1,1].
     float exloc(interp_t* ic, float dx, float dy, float dz);
     float eyloc(interp_t* ic, float dx, float dy, float dz);
     float ezloc(interp_t* ic, float dx, float dy, float dz);

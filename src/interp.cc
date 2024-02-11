@@ -147,6 +147,7 @@ void InterpArray::update() {
 } // end InterpArray::update()
 
 // Interpolate field(s) to (x,y,z) location given by voxel + offsets.
+// Voxel offsets dx,dy,dz are within interval [-1,1].
 float InterpArray::exloc(interp_t* ic, float dx, float dy, float dz) {
     return ( ic->ex + dx*( ic->dexdx + dx*ic->d2exdx )
                     + dy*( ic->dexdy + dy*ic->d2exdy )
