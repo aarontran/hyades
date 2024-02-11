@@ -131,8 +131,10 @@ int main(int argc, char* argv[]) {
 
   while (step < par.ilast) {
 
-    // fields at B(t=n), E(t=n)
-    // particle at r(t=n), v(t=n-1/2)
+    // At the start of loop iteration
+    // ... fields E,B at t=n
+    // ... particle r at t=n
+    // ... particle v,j,rho at t=n-1/2
 
     //printf(
     //  "step %d p[0] ind %d; w = %f; x,y,z = %f,%f,%f; ux,uy,uz = %f,%f,%f\n",
@@ -141,35 +143,31 @@ int main(int argc, char* argv[]) {
     //  (ions.p0[0]).ux,(ions.p0[0]).uy,(ions.p0[0]).uz
     //);
 
-    //if (step % par.isort == 0) ions.sort();
+    //if (step % par.isort == 0) ions.sort();  // not implemented
 
     // TODO fill ghost cells for E/B required before interp
     // I think better to display the ghost cell filling/resetting operations
     // all at the top level b/c important for evolution loop understanding.
 
-    // update field interpolation coefficients
-    ia.update();
-
+    // prepare for particle advance
     fa.mesh_set_jrho(0., 0., 0., 0.);
+    ia.update();                    // compute E/B field interpolation coeffs
 
-    // particles advance to r(t=n+1), v(t=n+1/2);
-    // deposit charge, current at n(t=n+1/2), j(t=n+1/2);
-    // teleport across periodic grid boundaries
-    ions.move_deposit();
-    // smooth deposited particle moments if needed
-    //ions.smooth();
+    ions.move_deposit();            // r,v advanced
+    fa.ghost_deposit_jrho();        // j advanced
+    //fa.smooth_jrho();             // not implemented
 
-    // update ghost cells for particle currents
-    fa.ghost_deposit_jrho();
-
-    // fields advance to B(t=n+1), E(t=n+1)
-    //fa.advance_b(ions);
-    // smooth deposited fields if needed
-    //fa.smooth();
+    //fa.advance_b(ions);           // E,B advanced  // not implemented
+    //fa.smooth_eb();               // not implemented
 
     step++;
 
-    //if (step % par->idump == 0) diagnostics();
+    //if (step % par->idump == 0) diagnostics();  // not implemented
+
+    // At the end of loop iteration
+    // ... fields E,B advanced to t=n+1
+    // ... particle r advanced to t=n+1
+    // ... particle v,j,rho advanced to t=n+1/2
 
   }
 
