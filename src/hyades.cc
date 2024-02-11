@@ -22,9 +22,13 @@ int main(int argc, char* argv[]) {
   par.Lx = 10;
   par.Ly = 10;
   par.Lz = 10;
-  par.nx = 10;
+  //par.nx = 10;
+  //par.ny = 10;
+  //par.nz = 10;
+  par.nx =  5;  // for ghost cell testing
   par.ny = 10;
-  par.nz = 10;
+  par.nz = 20;
+  par.ng =  2;  // number of ghost cells
   par.seed = 1;  // zero-th particle gets teleported so useful test case
 
   par.nppc  = 10;  // total 10,000 particles...
@@ -36,7 +40,7 @@ int main(int argc, char* argv[]) {
   // across boundaries
 
   Random         rng = Random(par.seed);
-  FieldArray      fa = FieldArray(par.nx, par.ny, par.ny, 2,  // nx,ny,nz,ng
+  FieldArray      fa = FieldArray(par.nx, par.ny, par.nz, par.ng,  // nx,ny,nz,ng
                                   par.Lx/par.nx,  // hx
                                   par.Ly/par.ny,  // hy
                                   par.Lz/par.nz,  // hz
@@ -50,7 +54,7 @@ int main(int argc, char* argv[]) {
   fa.freset(0);
   fa.uniform_b(1, 1, 1);
   fa.uniform_e(0, 0, 0);
-  fa.update_ghost();  // populate ghost cells; don't implement partial updates b/c too painful
+  fa.ghost_sync_slab();  // populate ghost cells; don't implement partial updates b/c too painful
 
   ions.initialize(npart);  // index 0 to 9
   ions.maxwellian(0, npart, vth, 0, 0, 0);

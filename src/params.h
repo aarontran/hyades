@@ -15,6 +15,7 @@ typedef struct param {
   int nx;
   int ny;
   int nz;
+  int ng;
 
   int npmax;
   int nppc;
