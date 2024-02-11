@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdlib.h>  // for malloc
 #include <stdio.h>  // warn about buffer overflows
 
@@ -35,10 +36,13 @@ void ParticleArray::sort() {
 
 // Initialize particles with zero position and velocity
 void ParticleArray::initialize(int count) {
+
   if (np+count > npmax) {
-    printf("WARNING: buffer overflow in particle init!\n");
-    return;
+    printf("ERROR: particle overflow requested %d max %d\n", np+count, npmax);
+    //return;
   }
+  assert(np+count <= npmax);
+
   particle_t* p = &(p0[np]);
   for (int ii=np; ii<np+count; ++ii) {
     p->x   = 0;

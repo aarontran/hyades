@@ -6,7 +6,7 @@ LIBS= -L/Users/atran/opt/miniconda3/envs/wham/lib
 
 FLAGS= -Wall -fopenmp -g
 #FLAGS= -lgomp -fopenmp
-#FLAGS= -Ofast -mcpu=native -mtune=native -fno-strict-aliasing
+#FLAGS= -fopenmp -Ofast -mcpu=native -mtune=native -fno-strict-aliasing
 
 
 # Quick reference.
