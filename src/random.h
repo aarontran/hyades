@@ -1,5 +1,5 @@
-#ifndef RNG_H
-#define RNG_H
+#ifndef RANDOM_H
+#define RANDOM_H
 
 // https://en.wikipedia.org/wiki/Lehmer_random_number_generator
 // See also std::minstd_rand
@@ -21,4 +21,4 @@ class Random {
 
 };
 
-#endif  // RNG_H
+#endif  // RANDOM_H

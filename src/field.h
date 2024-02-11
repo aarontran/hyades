@@ -1,5 +1,5 @@
-#ifndef FIELDS_H
-#define FIELDS_H
+#ifndef FIELD_H
+#define FIELD_H
 
 typedef struct field {
   // If you change field layout, also update
@@ -64,4 +64,4 @@ class FieldArray {
 
 };
 
-#endif  // FIELDS_H
+#endif  // FIELD_H

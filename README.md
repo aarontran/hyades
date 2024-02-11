@@ -22,11 +22,19 @@ acceleration?
 Make this code work for 1 node ONLY, periodic boundaries ONLY.
 MPI communication is a big job.
 
-Convention: typedef structs have `_t` lowercase, classes use CamelCase.
 
 Some design principles:
-* interpolator = holds coefficients + stencils for how to map fields to
-  particles, so that we can easily swap in/out different interpolation schemes.
+* Major data structures
+  + field.h    -> class FieldArray    -> struct field
+  + interp.h   -> class InterpArray   -> struct interp
+  + particle.h -> class ParticleArray -> struct particle
+* Auxiliary data structures
+  + param.h    -> struct param
+  + random.h   -> class Random
+* typedef structs have `_t` lowercase, classes use CamelCase.
+* all filenames singular, except for "hyades.cc"
+* interpolator holds coefficients + stencils for how to map fields to
+  particles, so that we can easily swap in/out different schemes.
 
 
 About Hyades

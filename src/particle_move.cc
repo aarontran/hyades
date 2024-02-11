@@ -1,9 +1,9 @@
 #include <stdlib.h> // need stdlib to get int32_t at compile time???,
                     // don't understand why --ATr,2024feb09
 #include <stdio.h>
-#include "fields.h"
+#include "field.h"
 #include "interp.h"
-#include "particles.h"
+#include "particle.h"
 
 void ParticleArray::move_deposit() {
 

@@ -1,7 +1,7 @@
-#ifndef PARTICLES_H
-#define PARTICLES_H
+#ifndef PARTICLE_H
+#define PARTICLE_H
 
-#include "fields.h"
+#include "field.h"
 #include "random.h"
 
 typedef struct particle {
@@ -47,4 +47,4 @@ class ParticleArray {
 };
 
 
-#endif  // PARTICLES_H
+#endif  // PARTICLE_H

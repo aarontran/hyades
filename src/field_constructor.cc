@@ -2,7 +2,7 @@
 #include <stdlib.h>  // for malloc, qsort
 #include <stdio.h>  // for printf
 
-#include "fields.h"
+#include "field.h"
 
 // For field-init ghost cell testing. -ATr,2024feb10
 // copy-pasted from https://en.cppreference.com/w/c/algorithm/qsort

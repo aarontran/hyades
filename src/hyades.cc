@@ -2,10 +2,10 @@
 #include <stdio.h>  // for printf
 #include <omp.h>
 
-#include "fields.h"
+#include "field.h"
 #include "interp.h"
-#include "params.h"
-#include "particles.h"
+#include "param.h"
+#include "particle.h"
 #include "random.h"
 
 int main(int argc, char* argv[]) {

@@ -1,5 +1,5 @@
-#ifndef PARAMS_H
-#define PARAMS_H
+#ifndef PARAM_H
+#define PARAM_H
 
 typedef struct param {
 
@@ -22,4 +22,4 @@ typedef struct param {
 
 } param_t;
 
-#endif  //PARAMS_H
+#endif  //PARAM_H

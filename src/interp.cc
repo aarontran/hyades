@@ -1,7 +1,7 @@
 #include <stdlib.h>  // for malloc
 #include <stdio.h>  // for printf
 
-#include "fields.h"
+#include "field.h"
 #include "interp.h"
 
 // Constructor

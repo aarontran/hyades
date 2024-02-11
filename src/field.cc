@@ -1,7 +1,7 @@
 #include <stdlib.h>  // for NULL
 //#include <stdio.h>  // for printf
 
-#include "fields.h"
+#include "field.h"
 
 // ----------------------------------------------------------------------------
 // Low-level methods

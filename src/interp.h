@@ -1,7 +1,7 @@
 #ifndef INTERP_H
 #define INTERP_H
 
-#include "fields.h"
+#include "field.h"
 
 typedef struct interp {
   // Second-order accurate interpolation coefficients

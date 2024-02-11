@@ -1,9 +1,9 @@
 #include <stdlib.h>  // for malloc
 #include <stdio.h>  // warn about buffer overflows
 
-#include "fields.h"
+#include "field.h"
 #include "interp.h"
-#include "particles.h"
+#include "particle.h"
 #include "random.h"
 
 #ifndef M_PI
