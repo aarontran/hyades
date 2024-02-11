@@ -1,5 +1,5 @@
 #include <stdlib.h>  // for NULL
-//#include <stdio.h>  // for printf
+#include <stdio.h>  // for printf
 
 #include "field.h"
 
@@ -13,12 +13,14 @@ int FieldArray::ivoxel(int ii, int jj, int kk) {
 
 // Access fields using 3D integer tuple of grid mesh indices, 0-indexed
 field_t* FieldArray::voxel(int ii, int jj, int kk) {
-  return &f0[ ivoxel(ii,jj,kk) ];
+  return &( f0[ivoxel(ii,jj,kk)] );
 }
 
-// Low-level method to access over field_t struct members
-float* FieldArray::fget(field_t* ff, int ii) {
-  switch(ii) {
+// Low-level method to access field_t struct members by linear index,
+// returning a pointer (called "seek" rather than "get" because caller
+// can both read and write).
+float* FieldArray::fseek_one(int mm, field_t* ff) {
+  switch(mm) {
     case  0: return &(ff->ex);
     case  1: return &(ff->ey);
     case  2: return &(ff->ez);
@@ -39,125 +41,114 @@ float* FieldArray::fget(field_t* ff, int ii) {
   }
 }
 
-// Low-level method to copy field_t struct members from one voxel to another
-// ff = destination, gg = data to copy
-void FieldArray::fcopy(field_t* ff, field_t* gg) {
-  for (int ii = 0; ii < nfstruct; ++ii) {
-    *(fget(ff,ii)) = *(fget(gg,ii));
-  }
+// Low-level method to set ghost and live cell values for one field
+void FieldArray::fset_one(int mm, float v, field_t* ff) {
+  *(fseek_one(mm,ff)) = v;
 }
 
 // Low-level method to set ghost and live cell values for all fields
-// (including ghost corners), meant for testing and debugging.
-void FieldArray::freset(float v) {
-  field_t* ff = f0;
-  for (int ii=0; ii < nvall; ++ii) {
-    for (int nn = 0; nn < nfstruct; ++nn) {
-      *(fget(ff,nn)) = v;
-    }
-    ++ff;
+void FieldArray::fset_all(float v, field_t* ff) {
+  for (int mm = 0; mm < nfstruct; ++mm) {
+    fset_one(mm, v, ff);
+  }
+}
+
+// Low-level method to copy one field value from one voxel to another
+// ii = field struct member index, ff = destination voxel, gg = source voxel
+void FieldArray::fcopy_one(int mm, field_t* ff, field_t* gg) {
+  *(fseek_one(mm,ff)) = *(fseek_one(mm,gg));
+}
+
+// Low-level method to copy all field values from one voxel to another
+// ff = destination voxel, gg = source voxel
+void FieldArray::fcopy_all(field_t* ff, field_t* gg) {
+  for (int mm = 0; mm < nfstruct; ++mm) {
+    fcopy_one(mm, ff, gg);
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Intermediate-level full/alive-mesh methods
+
+// Set one field struct member mm to value v on full mesh (live+ghost)
+//void FieldArray::mesh_set_one(int mm, float v) {
+//  for (int kk = 0; kk < (nz+2*ng); ++kk) {
+//  for (int jj = 0; jj < (ny+2*ng); ++jj) {
+//  for (int ii = 0; ii < (nx+2*ng); ++ii) {
+//    field_t* ff = voxel(ii,jj,kk);
+//    fset_one(mm, v, ff);
+//  }}}
+//}
+
+// Set all field struct members to value v on full mesh (live+ghost)
+void FieldArray::mesh_set_all(float v) {
+  for (int kk = 0; kk < (nz+2*ng); ++kk) {
+  for (int jj = 0; jj < (ny+2*ng); ++jj) {
+  for (int ii = 0; ii < (nx+2*ng); ++ii) {
+    field_t* ff = voxel(ii,jj,kk);
+    fset_all(v, ff);
+  }}}
+}
+
+// Set one field struct member mm to value v on live cells
+//void FieldArray::alive_set_one(int mm, float v) {
+//  for (int kk = ng; kk < (nz+ng); ++kk) {
+//  for (int jj = ng; jj < (ny+ng); ++jj) {
+//  for (int ii = ng; ii < (nx+ng); ++ii) {
+//    field_t* ff = voxel(ii,jj,kk);
+//    fset_one(mm, v, ff);
+//  }}}
+//}
+
+// Set all field struct members to value v on live cells
+//void FieldArray::alive_set_all(float v) {
+//  for (int kk = ng; kk < (nz+ng); ++kk) {
+//  for (int jj = ng; jj < (ny+ng); ++jj) {
+//  for (int ii = ng; ii < (nx+ng); ++ii) {
+//    field_t* ff = voxel(ii,jj,kk);
+//    fset_all(v, ff);
+//  }}}
+//}
+
+// ----------------------------------------------------------------------------
+// Intermediate-level ghost-mesh methods
+
+// Copy all field struct members from live cells to ghost cells
+void FieldArray::ghost_copy_all() {
+  int* ivghost = ivoxels_ghost;
+  int* ivghsrc = ivoxels_ghsrc;
+  for (int ii = 0; ii < nvg; ++ii) {
+    field_t* gh  = &( f0[*ivghost] );
+    field_t* src = &( f0[*ivghsrc] );
+    fcopy_all(gh, src);
+    ++ivghost;
+    ++ivghsrc;
   }
 }
 
 // ----------------------------------------------------------------------------
 // High-level methods
 
-// Set B field to a uniform value, EXCLUDING ghost cells
-void FieldArray::uniform_b(float bx, float by, float bz) {
-  for (int kk=ng; kk < (nz+ng); ++kk) {
-    for (int jj=ng; jj < (ny+ng); ++jj) {
-      for (int ii=ng; ii < (nx+ng); ++ii) {
-        field_t* ff = voxel(ii,jj,kk);
-        ff->bx = bx;
-        ff->by = by;
-        ff->bz = bz;
-      }
-    }
-  }
+// Set B field to a uniform value, including ghost cells
+void FieldArray::mesh_set_b(float bx, float by, float bz) {
+  for (int kk = 0; kk < (nz+2*ng); ++kk) {
+  for (int jj = 0; jj < (ny+2*ng); ++jj) {
+  for (int ii = 0; ii < (nx+2*ng); ++ii) {
+    field_t* ff = voxel(ii,jj,kk);
+    ff->bx = bx;
+    ff->by = by;
+    ff->bz = bz;
+  }}}
 }
 
-// Set E field to a uniform value, EXCLUDING ghost cells
-void FieldArray::uniform_e(float ex, float ey, float ez) {
-  for (int kk=ng; kk < (nz+ng); ++kk) {
-    for (int jj=ng; jj < (ny+ng); ++jj) {
-      for (int ii=ng; ii < (nx+ng); ++ii) {
-        field_t* ff = voxel(ii,jj,kk);
-        ff->ex = ex;
-        ff->ey = ey;
-        ff->ez = ez;
-      }
-    }
-  }
-}
-
-// Copy ghost cell values
-// TODO implementation should use the ivoxels_ghost, ivoxels_ghsrc -ATr,2024feb10
-void FieldArray::ghost_sync_slab() {
-  field_t* local;
-  field_t* remote;
-
-  // The cell indexing scheme is:
-  //     ghost = [    0,      ng-1] = [    0,      ng)
-  //     live  = [   ng, nx+  ng-1] = [   ng, nx+  ng)
-  //     ghost = [nx+ng, nx+2*ng-1] = [nx+ng, nx+2*ng)
-  // where bracket=inclusive, parens=exclusive range bounds.
-  // Example: for 10 live and 2 ghost cells,
-  // indices 0-1 ghost, 2-11 live, 12-13 ghost.
-
-  // Left x slab <- right
-  for (int kk=(   ng); kk < (nz+  ng); ++kk) {
-  for (int jj=(   ng); jj < (ny+  ng); ++jj) {
-  for (int ii=(    0); ii < (     ng); ++ii) {
-    //if ((jj==ng)&&(kk==ng)) printf("Left x slab %d <- %d\n", ii, nx+ii);
-    local  = voxel(   ii, jj, kk);
-    remote = voxel(nx+ii, jj, kk);
-    fcopy(local, remote);
+// Set E field to a uniform value, including ghost cells
+void FieldArray::mesh_set_e(float ex, float ey, float ez) {
+  for (int kk = 0; kk < (nz+2*ng); ++kk) {
+  for (int jj = 0; jj < (ny+2*ng); ++jj) {
+  for (int ii = 0; ii < (nx+2*ng); ++ii) {
+    field_t* ff = voxel(ii,jj,kk);
+    ff->ex = ex;
+    ff->ey = ey;
+    ff->ez = ez;
   }}}
-  // Left y slab <- right
-  for (int kk=(   ng); kk < (nz+  ng); ++kk) {
-  for (int jj=(    0); jj < (     ng); ++jj) {
-  for (int ii=(   ng); ii < (nx+  ng); ++ii) {
-    //if ((ii==ng)&&(kk==ng)) printf("Left y slab %d <- %d\n", jj, ny+jj);
-    local  = voxel(ii,    jj, kk);
-    remote = voxel(ii, ny+jj, kk);
-    fcopy(local, remote);
-  }}}
-  // Left z slab <- right
-  for (int kk=(    0); kk < (     ng); ++kk) {
-  for (int jj=(   ng); jj < (ny+  ng); ++jj) {
-  for (int ii=(   ng); ii < (nx+  ng); ++ii) {
-    //if ((ii==ng)&&(jj==ng)) printf("Left z slab %d <- %d\n", kk, nz+kk);
-    local  = voxel(ii, jj,    kk);
-    remote = voxel(ii, jj, nz+kk);
-    fcopy(local, remote);
-  }}}
-
-  // Right x slab <- left
-  for (int kk=(   ng); kk < (nz+  ng); ++kk) {
-  for (int jj=(   ng); jj < (ny+  ng); ++jj) {
-  for (int ii=(    0); ii < (     ng); ++ii) {
-    //if ((jj==ng)&&(kk==ng)) printf("Right x slab %d <- %d\n", nx+ng+ii, ng+ii);
-    local  = voxel(nx+ng+ii, jj, kk);
-    remote = voxel(   ng+ii, jj, kk);
-    fcopy(local, remote);
-  }}}
-  // Right y slab <- left
-  for (int kk=(   ng); kk < (nz+  ng); ++kk) {
-  for (int jj=(    0); jj < (     ng); ++jj) {
-  for (int ii=(   ng); ii < (nx+  ng); ++ii) {
-    //if ((ii==ng)&&(kk==ng)) printf("Right y slab %d <- %d\n", ny+ng+jj, ng+jj);
-    local  = voxel(ii, ny+ng+jj, kk);
-    remote = voxel(ii,    ng+jj, kk);
-    fcopy(local, remote);
-  }}}
-  // Right z slab <- left
-  for (int kk=(    0); kk < (     ng); ++kk) {
-  for (int jj=(   ng); jj < (ny+  ng); ++jj) {
-  for (int ii=(   ng); ii < (nx+  ng); ++ii) {
-    //if ((ii==ng)&&(jj==ng)) printf("Right z slab %d <- %d\n", nz+ng+kk, ng+kk);
-    local  = voxel(ii, jj, nz+ng+kk);
-    remote = voxel(ii, jj,    ng+kk);
-    fcopy(local, remote);
-  }}}
-
 }

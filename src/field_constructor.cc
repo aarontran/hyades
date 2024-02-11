@@ -6,7 +6,6 @@
 
 // For field-init ghost cell testing. -ATr,2024feb10
 // copy-pasted from https://en.cppreference.com/w/c/algorithm/qsort
-// TODO move constructor into its own file
 int compare_ints(const void* a, const void* b) {
     int arg1 = *(const int*)a;
     int arg2 = *(const int*)b;

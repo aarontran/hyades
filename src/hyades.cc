@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdlib.h>  // for malloc, free
 #include <stdio.h>  // for printf
 #include <omp.h>
@@ -51,10 +52,9 @@ int main(int argc, char* argv[]) {
   double vth = 0.404;
   int npart = par.nppc*(par.nx*par.ny*par.nz);
 
-  fa.freset(0);
-  fa.uniform_b(1, 1, 1);
-  fa.uniform_e(0, 0, 0);
-  fa.ghost_sync_slab();  // populate ghost cells; don't implement partial updates b/c too painful
+  fa.mesh_set_all(0.);
+  fa.mesh_set_b(1, 1, 1);
+  fa.mesh_set_e(0, 0, 0);
 
   ions.initialize(npart);  // index 0 to 9
   ions.maxwellian(0, npart, vth, 0, 0, 0);
@@ -79,10 +79,10 @@ int main(int argc, char* argv[]) {
   //printf("voxel(2,0,0) is %p\n", fa.voxel(2,0,0));
 
   // Example: field access via voxel indexing
-  printf("bx(0,0,0) is %f\n", fa.voxel(0,0,0)->bx);
-  printf("bx(1,0,0) is %f\n", fa.voxel(1,0,0)->bx);
-  printf("bx(2,0,0) is %f\n", fa.voxel(2,0,0)->bx);
-  printf("bx(11,11,11) is %f\n", fa.voxel(11,11,11)->bx);
+  //printf("bx(0,2,2) is %f\n", fa.voxel(0,2,2)->bx);
+  //printf("bx(1,2,2) is %f\n", fa.voxel(1,2,2)->bx);
+  //printf("bx(2,2,2) is %f\n", fa.voxel(2,2,2)->bx);
+  //printf("bx(11,11,11) is %f\n", fa.voxel(11,11,11)->bx);
 
   // Example: field access via pointer arithmetic
   //field_t* f = fa.voxel(0,0,0);

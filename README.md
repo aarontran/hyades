@@ -13,6 +13,10 @@ Developer notes
 ---------------
 
 Code should follow the [Google style guide](https://google.github.io/styleguide/cppguide.html).
+* TODO update class member naming convention to use underscores per
+  [https://google.github.io/styleguide/cppguide.html#Variable_Names](here),
+  I am already getting bit by naming scheme...
+* avoid macros to the largest extent possible
 
 Take programming cues from VPIC, Hybrid-VPIC, TRISTAN-MP, Pegasus, WarpX,
 Torch, and other codes on the market.
