@@ -176,12 +176,11 @@ int main(int argc, char* argv[]) {
   printf("field array jfz %f\n", fa.voxel(2,2,2)->jfz);
   printf("field array rhof %f\n",fa.voxel(2,2,2)->rhof);
 
-  // Pointers malloc'ed in class constructors cannot be freed in main?
-  // clang compiler says "pointer being freed was not allocated"
-  // don't understand why this doesn't work --ATr,2024feb10
-  //free(ions.p0);
-  //free(ia.ic0);
-  //free(fa.f);
+  free(ions.p0);
+  free(ia.ic0);
+  free(fa.f0);
+  free(fa.ivoxels_ghost);
+  free(fa.ivoxels_ghsrc);
 
   return 0;
 }
