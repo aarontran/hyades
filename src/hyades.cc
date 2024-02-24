@@ -49,15 +49,23 @@ int main(int argc, char* argv[]) {
   InterpArray     ia = InterpArray(fa);
   ParticleArray ions = ParticleArray(1, 1, par.npmax, fa, ia, rng);
 
-  double vth = 0.404;
+  double vthi = 0.404;
+  double TiTe = 8;
   int npart = par.nppc*(par.nx*par.ny*par.nz);
+
+  // Hybrid algorithm parameters
+  fa.hyb_te_ref_   = vthi*vthi/TiTe;  // Electron temperature kB*Te/(mi*vA0^2) scaled to ION mass
+  fa.hyb_ne_ref_   = 1.;              // Electron density ref value for EoS
+  fa.hyb_ne_floor_ = 0.05;            // Electron density floor
+  fa.hyb_eta_      = 1e-4;            // Resistivity
+  fa.hyb_hypereta_ = 1e-4;            // Hyper-resistivity
 
   fa.mesh_set_all(0.);
   fa.mesh_set_b(1, 1, 1);
   fa.mesh_set_e(0, 0, 0);
 
   ions.initialize(npart);
-  ions.maxwellian(0, npart, vth, 10., 0, 0);
+  ions.maxwellian(0, npart, vthi, 10., 0, 0);
   ions.uniform(0, npart, 0., par.Lx, 0., par.Ly, 0., par.Lz);
 
   // Set initial E/B values on grid

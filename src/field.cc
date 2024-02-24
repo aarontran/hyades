@@ -41,6 +41,10 @@ float* FieldArray::fseek_one(int mm, field_t* ff) {
     case 17: return &(ff->jfy0);
     case 18: return &(ff->jfz0);
     case 19: return &(ff->rhof0);
+    case 20: return &(ff->smex);
+    case 21: return &(ff->smey);
+    case 22: return &(ff->smez);
+    case 23: return &(ff->pad);
     default: return NULL;
   }
 }

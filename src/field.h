@@ -2,22 +2,22 @@
 #define FIELD_H
 
 typedef struct field {
-  // If you change field layout, also update FieldArray member data and
-  // subroutines: nfstruct, fget, ghost_{reset,copy,reduce}_{eb,jrho},
-  // and any other convenience methods that address field members by index
+  // If you change struct layout, also update FieldArray member data and
+  // subroutines: nfstruct, fseek_one(...), and any other code that accesses
+  // field members by explicit index
   float ex,     ey,     ez,     tmpx;
   float bx,     by,     bz,     tmpy;
   float bx0,    by0,    bz0,    tmpz;
   float jfx,    jfy,    jfz,    rhof;
   float jfx0,   jfy0,   jfz0,   rhof0;
-  //float smex,   smey,   smez,   pexx;
+  float smex,   smey,   smez,   pad;//pexx;
   //float smcbx,  smcby,  smcbz,  cmat;
 } field_t;
 
 class FieldArray {
 
   private:
-    const static int nfstruct = 20;  // number of floats in field_t typedef
+    const static int nfstruct = 24;  // number of floats in field_t typedef
 
   public:
     FieldArray(int nx_, int ny_, int nz_, int ng_, float hx_, float hy_, float hz_, float dt_);
