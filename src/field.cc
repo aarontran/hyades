@@ -205,6 +205,36 @@ void FieldArray::ghost_copy_eb() {
   }
 }
 
+// Copy E field from live cells to ghost cells; overwrite old ghosts
+void FieldArray::ghost_copy_e() {
+  int* ivghost = ivoxels_ghost;
+  int* ivghsrc = ivoxels_ghsrc;
+  for (int ii = 0; ii < nvg; ++ii) {
+    field_t* gh  = &( f0[*ivghost] );
+    field_t* src = &( f0[*ivghsrc] );
+    gh->ex = src->ex;
+    gh->ey = src->ey;
+    gh->ez = src->ez;
+    ++ivghost;
+    ++ivghsrc;
+  }
+}
+
+// Copy B field from live cells to ghost cells; overwrite old ghosts
+void FieldArray::ghost_copy_b() {
+  int* ivghost = ivoxels_ghost;
+  int* ivghsrc = ivoxels_ghsrc;
+  for (int ii = 0; ii < nvg; ++ii) {
+    field_t* gh  = &( f0[*ivghost] );
+    field_t* src = &( f0[*ivghsrc] );
+    gh->bx = src->bx;
+    gh->by = src->by;
+    gh->bz = src->bz;
+    ++ivghost;
+    ++ivghsrc;
+  }
+}
+
 // Copy j/rho fields from live cells to ghost cells; overwrite old ghosts
 void FieldArray::ghost_copy_jrho() {
   int* ivghost = ivoxels_ghost;

@@ -4,30 +4,47 @@
 
 #include "field.h"
 
-// RK4 scheme for magnetic field advance
-// assuming all fields and ion moments are defined at cell centers.
-// TODO subcycling not implemented yet
+// ----------------------------------------------------------------------------
+// advance_eb_rk4_ctrmesh() advances both E/B fields in time using a
+// 4th-order Runge Kutta (RK4) algorithm, assuming all fields and ion moments
+// are stored on a cell-centered mesh.
+// It uses the following fields:
+//    E at t_n
+//    B at t_n
+//    ion density at t_{n+1/2}
+//    ion velocity at t_{n+1/2}
+//    old ion density at t_{n-1/2}
+//    old ion velocity at t_{n-1/2}
+// The ion moments are extrapolated forward in time to t_{n+1}.
+//
+// Inputs:
+//    none (TODO subcycling not implemented yet)
+// Result:
+//    E and B fields advanced 1 step in time on live AND ghost cells.
+// ----------------------------------------------------------------------------
 void FieldArray::advance_eb_rk4_ctrmesh() {
 
-  // Current state:
-  // E at time n
-  // B at time n
-  // particles r at n+1
-  // particles v at n+1/2
+  const float r2hx = (nx > 1) ? 1/(2*hx) : 0;
+  const float r2hy = (ny > 1) ? 1/(2*hy) : 0;
+  const float r2hz = (nz > 1) ? 1/(2*hz) : 0;
 
-  // RK4 scheme for B-field advance.
+  const float dt_half  = dt/2.0;
+  const float dt_sixth = dt/6.0;
+
+  // RK4 scheme.
   // 1. Compute k1 using B_n, E_n
-  // 2. Compute k2 using B_{n+1/2)',  E_{n+1/2}'  <- depends on k1
-  // 3. Compute k3 using B_{n+1/2)'', E_{n+1/2}'' <- depends on k2
-  // 4. Compute k4 using B_{n+1}',    E_{n+1}'    <- depends on k3
+  // 2. Compute k2 using B_{n+1/2)',  E_{n+1/2}'
+  // 3. Compute k3 using B_{n+1/2)'', E_{n+1/2}''
+  // 4. Compute k4 using B_{n+1}',    E_{n+1}'
   // 5. Compute final    B_{n+1},     E_{n+1}
   //
-  // How to do the memory?
-  // Need 3 tmp vars (bx0,by0,bz0)    to hold B_n
-  // Need 3 tmp vars (tmpx,tmpy,tmpz) to accumulate k1,k2,k3,k4 for final B_{n+1}
-  // Need 3 tmp vars (smex,smey,smez) for hyper-resistivity
+  // Need tmp vars (bx0,by0,bz0)    to hold B_n
+  //               (tmpx,tmpy,tmpz) to accumulate k1,k2,k3,k4 for final B_{n+1}
+  //               (smex,smey,smez) for hyper-resistivity
 
-  // Setup
+  // -------
+  // Setup.
+  // -------
   field_t fv;
   for (int ii = 0; ii < nvall; ++ii) {
     fv = f0[ii];
@@ -36,33 +53,143 @@ void FieldArray::advance_eb_rk4_ctrmesh() {
     fv.bz0  = fv.bz;
   }
 
+  // -------
   // Step 1.
-  advance_e_ctrmesh(0.);       // E_n using B_n
-//  k1 = -1*curl(e);
-//  tmp = 1/6 * k1;
-//  b = b0 + 1/2 * k1;  // B_{n+1/2}'
-//
-//  // Step 2.
-//  advance_e_ctrmesh(0.5);     // E_{n+1/2}'
-//  k2 = -1*curl(e);
-//  tmp += 1/3 * k2;
-//  b = b0 + 1/2 * k2;  // B_{n+1/2}''
-//
-//  // Step 3.
-//  advance_e_ctrmesh(0.5);     // E_{n+1/2}''
-//  k3 = -1*curl(e);
-//  tmp += 1/3 * k3;
-//  b = b0 + k3;        // B_{n+1}'
-//
-//  // Step 4.
-//  advance_e_ctrmesh(1);       // E_{n+1}'
-//  k4 = -1*curl(e);
-//  tmp += 1/6 * k4;
-//  b = b0 + tmp;       // B_{n+1} final
-//
-//  // Step 5.
-//  advance_e_ctrmesh(1);       // E_{n+1} final
+  // -------
 
+  // E_n
+  advance_e_ctrmesh(0.);
+
+  for (int kk = ng; kk < (nz+ng); ++kk) {
+  for (int jj = ng; jj < (ny+ng); ++jj) {
+  for (int ii = ng; ii < (nx+ng); ++ii) {
+    field_t* fv  = voxel(ii  ,jj  ,kk  );
+    field_t* fmx = voxel(ii-1,jj  ,kk  );
+    field_t* fmy = voxel(ii  ,jj-1,kk  );
+    field_t* fmz = voxel(ii  ,jj  ,kk-1);
+    field_t* fx  = voxel(ii+1,jj  ,kk  );
+    field_t* fy  = voxel(ii  ,jj+1,kk  );
+    field_t* fz  = voxel(ii  ,jj  ,kk+1);
+    // -curl(E_n)
+    float k1x = - r2hy*(fy->ez - fmy->ez) + r2hz*(fz->ey - fmz->ey);  // -(∂y Ez - ∂z Ey)
+    float k1y = - r2hz*(fz->ex - fmz->ex) + r2hx*(fx->ez - fmx->ez);  // -(∂z Ex - ∂x Ez)
+    float k1z = - r2hx*(fx->ey - fmx->ey) + r2hy*(fy->ex - fmy->ex);  // -(∂x Ey - ∂y Ex)
+    // Accumulate final B_{n+1}
+    // notice "=" assignment unlike "+=" in following RK4 steps
+    fv->tmpx = k1x;
+    fv->tmpy = k1y;
+    fv->tmpz = k1z;
+    // B_{n+1/2}'
+    fv->bx = fv->bx0 + dt_half * k1x;
+    fv->by = fv->by0 + dt_half * k1y;
+    fv->bz = fv->bz0 + dt_half * k1z;
+  }}}
+
+  ghost_copy_b();
+
+  // -------
+  // Step 2.
+  // -------
+
+  // E_{n+1/2}'
+  advance_e_ctrmesh(0.5);
+
+  for (int kk = ng; kk < (nz+ng); ++kk) {
+  for (int jj = ng; jj < (ny+ng); ++jj) {
+  for (int ii = ng; ii < (nx+ng); ++ii) {
+    field_t* fv  = voxel(ii  ,jj  ,kk  );
+    field_t* fmx = voxel(ii-1,jj  ,kk  );
+    field_t* fmy = voxel(ii  ,jj-1,kk  );
+    field_t* fmz = voxel(ii  ,jj  ,kk-1);
+    field_t* fx  = voxel(ii+1,jj  ,kk  );
+    field_t* fy  = voxel(ii  ,jj+1,kk  );
+    field_t* fz  = voxel(ii  ,jj  ,kk+1);
+    // -curl(E_{n+1/2}')
+    float k2x = - r2hy*(fy->ez - fmy->ez) + r2hz*(fz->ey - fmz->ey);  // -(∂y Ez - ∂z Ey)
+    float k2y = - r2hz*(fz->ex - fmz->ex) + r2hx*(fx->ez - fmx->ez);  // -(∂z Ex - ∂x Ez)
+    float k2z = - r2hx*(fx->ey - fmx->ey) + r2hy*(fy->ex - fmy->ex);  // -(∂x Ey - ∂y Ex)
+    // Accumulate final B_{n+1}
+    fv->tmpx += 2 * k2x;
+    fv->tmpy += 2 * k2y;
+    fv->tmpz += 2 * k2z;
+    // B_{n+1/2}''
+    fv->bx = fv->bx0 + dt_half * k2x;
+    fv->by = fv->by0 + dt_half * k2y;
+    fv->bz = fv->bz0 + dt_half * k2z;
+  }}}
+
+  ghost_copy_b();
+
+  // -------
+  // Step 3.
+  // -------
+
+  // E_{n+1/2}''
+  advance_e_ctrmesh(0.5);
+
+  for (int kk = ng; kk < (nz+ng); ++kk) {
+  for (int jj = ng; jj < (ny+ng); ++jj) {
+  for (int ii = ng; ii < (nx+ng); ++ii) {
+    field_t* fv  = voxel(ii  ,jj  ,kk  );
+    field_t* fmx = voxel(ii-1,jj  ,kk  );
+    field_t* fmy = voxel(ii  ,jj-1,kk  );
+    field_t* fmz = voxel(ii  ,jj  ,kk-1);
+    field_t* fx  = voxel(ii+1,jj  ,kk  );
+    field_t* fy  = voxel(ii  ,jj+1,kk  );
+    field_t* fz  = voxel(ii  ,jj  ,kk+1);
+    // -curl(E_{n+1/2}'')
+    float k3x = - r2hy*(fy->ez - fmy->ez) + r2hz*(fz->ey - fmz->ey);  // -(∂y Ez - ∂z Ey)
+    float k3y = - r2hz*(fz->ex - fmz->ex) + r2hx*(fx->ez - fmx->ez);  // -(∂z Ex - ∂x Ez)
+    float k3z = - r2hx*(fx->ey - fmx->ey) + r2hy*(fy->ex - fmy->ex);  // -(∂x Ey - ∂y Ex)
+    // Accumulate final B_{n+1}
+    fv->tmpx += 2 * k3x;
+    fv->tmpy += 2 * k3y;
+    fv->tmpz += 2 * k3z;
+    // B_{n+1}'
+    fv->bx = fv->bx0 + dt * k3x;
+    fv->by = fv->by0 + dt * k3y;
+    fv->bz = fv->bz0 + dt * k3z;
+  }}}
+
+  ghost_copy_b();
+
+  // -------
+  // Step 4.
+  // -------
+
+  // E_{n+1}'
+  advance_e_ctrmesh(1.0);
+
+  for (int kk = ng; kk < (nz+ng); ++kk) {
+  for (int jj = ng; jj < (ny+ng); ++jj) {
+  for (int ii = ng; ii < (nx+ng); ++ii) {
+    field_t* fv  = voxel(ii  ,jj  ,kk  );
+    field_t* fmx = voxel(ii-1,jj  ,kk  );
+    field_t* fmy = voxel(ii  ,jj-1,kk  );
+    field_t* fmz = voxel(ii  ,jj  ,kk-1);
+    field_t* fx  = voxel(ii+1,jj  ,kk  );
+    field_t* fy  = voxel(ii  ,jj+1,kk  );
+    field_t* fz  = voxel(ii  ,jj  ,kk+1);
+    // -curl(E_{n+1}')
+    float k4x = - r2hy*(fy->ez - fmy->ez) + r2hz*(fz->ey - fmz->ey);  // -(∂y Ez - ∂z Ey)
+    float k4y = - r2hz*(fz->ex - fmz->ex) + r2hx*(fx->ez - fmx->ez);  // -(∂z Ex - ∂x Ez)
+    float k4z = - r2hx*(fx->ey - fmx->ey) + r2hy*(fy->ex - fmy->ex);  // -(∂x Ey - ∂y Ex)
+    // Final B_{n+1}
+    fv->bx = fv->bx0 + dt_sixth * (fv->tmpx + k4x);
+    fv->by = fv->by0 + dt_sixth * (fv->tmpy + k4y);
+    fv->bz = fv->bz0 + dt_sixth * (fv->tmpz + k4z);
+  }}}
+
+  ghost_copy_b();
+
+  // -------
+  // Step 5.
+  // -------
+
+  // Final E_{n+1}
+  advance_e_ctrmesh(1.0);
+
+  return;
 }
 
 // ----------------------------------------------------------------------------
@@ -72,7 +199,7 @@ void FieldArray::advance_eb_rk4_ctrmesh() {
 //    frac = 0 to 1 chooses a time between t_n to t_{n+1} for ion moments.
 //    The stored B field must updated to this time already.
 // Result:
-//    E field updated.
+//    E field updated on live AND ghost cells.
 // ----------------------------------------------------------------------------
 void FieldArray::advance_e_ctrmesh(float frac) {
 
@@ -226,5 +353,10 @@ void FieldArray::advance_e_ctrmesh(float frac) {
     fv->ey -= hyb_hypereta_*( rhz*(fz->smex - fmz->smex) - rhx*(fx->smez - fmx->smez) );
     fv->ez -= hyb_hypereta_*( rhx*(fx->smey - fmx->smey) - rhy*(fy->smex - fmy->smex) );
   }}}
+
+  // Field advance methods are responsible for updating their "own" ghosts.
+  ghost_copy_e();
+
+  return;
 
 }

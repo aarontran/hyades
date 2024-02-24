@@ -166,7 +166,7 @@ int main(int argc, char* argv[]) {
     fa.ghost_copy_jrho();           // j advanced on live+ghost
     //fa.smooth_jrho();             // not implemented
 
-    fa.advance_eb_rk4_ctrmesh();    // E,B advanced  // not fully implemented
+    fa.advance_eb_rk4_ctrmesh();    // E,B advanced on live+ghost
     //fa.smooth_eb();               // not implemented
 
     step++;
