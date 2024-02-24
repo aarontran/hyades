@@ -63,6 +63,8 @@ int main(int argc, char* argv[]) {
   // Set initial E/B values on grid
   // This requires deposition of ion moments
   //field_advance(fa, ions);
+  fa.mesh_set_jrho(0., 0., 0., 0.);     // TODO not correct, need to deposit
+  fa.mesh_set_jrho0();                  // ion moments --ATr,2024feb24
 
   //Simulation* sim = Simulation(...);  // may want for checkpoints eventually
   //sim->par  = par
@@ -146,16 +148,17 @@ int main(int argc, char* argv[]) {
     //if (step % par.isort == 0) ions.sort();  // not implemented
 
     // prepare for particle advance
+    fa.mesh_set_jrho0();              // copy old j/rho into j0/rho0
     fa.mesh_set_jrho(0., 0., 0., 0.);
     fa.ghost_copy_eb();             // update E/B in ghosts
     ia.update();                    // compute E/B field interpolation coeffs
 
     ions.move_deposit();            // r,v advanced
     fa.ghost_deposit_jrho();
-    fa.ghost_copy_jrho();           // j advanced
+    fa.ghost_copy_jrho();           // j advanced on live+ghost
     //fa.smooth_jrho();             // not implemented
 
-    //fa.advance_b(ions);           // E,B advanced  // not implemented
+    fa.advance_eb_rk4_ctrmesh();    // E,B advanced  // not fully implemented
     //fa.smooth_eb();               // not implemented
 
     step++;

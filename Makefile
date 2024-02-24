@@ -16,7 +16,7 @@ FLAGS= -Wall -fopenmp -g
 %.o: src/%.cc Makefile
 	$(CC) $(INCL) $(FLAGS) -c $<
 
-hyades: field.o field_constructor.o hyades.o interp.o particle.o particle_move.o random.o
+hyades: field.o field_advance.o field_constructor.o hyades.o interp.o particle.o particle_move.o random.o
 	$(CC) $(INCL) $(LIBS) $(FLAGS) -o hyades $^
 
 all: hyades

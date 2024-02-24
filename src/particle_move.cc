@@ -208,7 +208,7 @@ void ParticleArray::move_deposit() {
     field_t* fmy = fa.voxel(ix,  iy-1,iz  );
     field_t* fmz = fa.voxel(ix,  iy,  iz-1);
 
-    // Ari's quadratic spline deposit scheme current
+    // Ari's quadratic spline deposit scheme current at t=n+1/2
      f0->jfx +=  w0*p->ux;
      fx->jfx +=  wx*p->ux;
      fy->jfx +=  wy*p->ux;
@@ -233,7 +233,7 @@ void ParticleArray::move_deposit() {
     fmy->jfz += wmy*p->uz;
     fmz->jfz += wmz*p->uz;
 
-    // Ari's quadratic spline deposit scheme density
+    // Ari's quadratic spline deposit scheme density at t=n+1/2 (not t=n+1 !!)
      f0->rhof +=  w0;
      fx->rhof +=  wx;
      fy->rhof +=  wy;

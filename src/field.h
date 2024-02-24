@@ -5,12 +5,11 @@ typedef struct field {
   // If you change field layout, also update FieldArray member data and
   // subroutines: nfstruct, fget, ghost_{reset,copy,reduce}_{eb,jrho},
   // and any other convenience methods that address field members by index
-  float ex,     ey,     ez,     epsx;
-  float bx,     by,     bz,     epsy;
-  float bx0,    by0,    bz0,    epsz;
+  float ex,     ey,     ez,     tmpx;
+  float bx,     by,     bz,     tmpy;
+  float bx0,    by0,    bz0,    tmpz;
   float jfx,    jfy,    jfz,    rhof;
-  //float jfxold, jfyold, jfzold, rhofold;
-  //float tempx,  tempy,  tempz,  tmpsm;
+  float jfx0,   jfy0,   jfz0,   rhof0;
   //float smex,   smey,   smez,   pexx;
   //float smcbx,  smcby,  smcbz,  cmat;
 } field_t;
@@ -18,7 +17,7 @@ typedef struct field {
 class FieldArray {
 
   private:
-    const static int nfstruct = 16;  // number of floats in field_t typedef
+    const static int nfstruct = 20;  // number of floats in field_t typedef
 
   public:
     FieldArray(int nx_, int ny_, int nz_, int ng_, float hx_, float hy_, float hz_, float dt_);
@@ -36,6 +35,14 @@ class FieldArray {
     float hy;
     float hz;
     float dt;  // simulation timestep
+
+    // Hybrid algorithm parameters
+    float hyb_te_ref_;
+    float hyb_ne_ref_;
+    float hyb_ne_floor_;
+    float hyb_eta_;
+    float hyb_hypereta_;
+
     // the big kahuna
     field_t* f0;
     // ghost cell management
@@ -83,12 +90,18 @@ class FieldArray {
     void mesh_set_b   (float bx, float by, float bz);
     void mesh_set_e   (float ex, float ey, float ez);
     void mesh_set_jrho(float jx, float jy, float jz, float rho);
+    void mesh_set_jrho0();
 
     //void ghost_set_eb      (float v);  // not implemented
     //void ghost_set_jrho    (float v);
     void ghost_copy_eb     ();
     void ghost_copy_jrho   ();
     void ghost_deposit_jrho();
+
+    // --------------------------------------------------
+    // High-level methods for top-level hybrid algorithm
+    void advance_eb_rk4_ctrmesh   ();
+    void advance_e_ctrmesh        (float frac);
 
 };
 

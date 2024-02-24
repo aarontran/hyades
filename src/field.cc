@@ -24,19 +24,23 @@ float* FieldArray::fseek_one(int mm, field_t* ff) {
     case  0: return &(ff->ex);
     case  1: return &(ff->ey);
     case  2: return &(ff->ez);
-    case  3: return &(ff->epsx);
+    case  3: return &(ff->tmpx);
     case  4: return &(ff->bx);
     case  5: return &(ff->by);
     case  6: return &(ff->bz);
-    case  7: return &(ff->epsy);
+    case  7: return &(ff->tmpy);
     case  8: return &(ff->bx0);
     case  9: return &(ff->by0);
     case 10: return &(ff->bz0);
-    case 11: return &(ff->epsz);
+    case 11: return &(ff->tmpz);
     case 12: return &(ff->jfx);
     case 13: return &(ff->jfy);
     case 14: return &(ff->jfz);
     case 15: return &(ff->rhof);
+    case 16: return &(ff->jfx0);
+    case 17: return &(ff->jfy0);
+    case 18: return &(ff->jfz0);
+    case 19: return &(ff->rhof0);
     default: return NULL;
   }
 }
@@ -163,6 +167,19 @@ void FieldArray::mesh_set_jrho(float jx, float jy, float jz, float rho) {
     ff->jfy = jy;
     ff->jfz = jz;
     ff->rhof = rho;
+  }}}
+}
+
+// Set old j/rho fields to current j/rho fields, including ghost cells
+void FieldArray::mesh_set_jrho0() {
+  for (int kk = 0; kk < (nz+2*ng); ++kk) {
+  for (int jj = 0; jj < (ny+2*ng); ++jj) {
+  for (int ii = 0; ii < (nx+2*ng); ++ii) {
+    field_t* ff = voxel(ii,jj,kk);
+    ff->jfx0  = ff->jfx;
+    ff->jfy0  = ff->jfy;
+    ff->jfz0  = ff->jfz;
+    ff->rhof0 = ff->rhof;
   }}}
 }
 
