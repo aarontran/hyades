@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-
-# source this file before running executable b/c need environment variable
-# set in runtime environment, only for my personal computer
-
-export DYLD_LIBRARY_PATH=/Users/atran/opt/miniconda3/envs/wham/lib
