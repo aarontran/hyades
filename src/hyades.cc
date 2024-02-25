@@ -71,7 +71,9 @@ int main(int argc, char* argv[]) {
   double weight = par.Lx*par.Ly*par.Lz/(par.nppc*par.nx*par.ny*par.nz);
 
   ions.initialize(npart, weight);
-  ions.maxwellian(0, npart, vthi, 10., 0, 0);
+  ions.maxwellian1d(0, npart, "ux", vthi, 10);
+  ions.maxwellian1d(0, npart, "uy", vthi, 2.);
+  ions.maxwellian1d(0, npart, "uz", vthi, 0.);
   ions.uniform(0, npart, 0., par.Lx, 0., par.Ly, 0., par.Lz);
 
   // At simulation start, the user provides:

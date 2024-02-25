@@ -42,7 +42,7 @@ class ParticleArray {
     // High-level methods for top-level hybrid algorithm
     void sort();
     void initialize(int count, float weight);
-    void maxwellian(int i0, int i1, float vth, float vdrx, float vdry, float vdrz);
+    void maxwellian1d(int i0, int i1, const char* uwhat, float vth, float vdr);
     void uniform(int i0, int i1, float x0, float x1, float y0, float y1, float z0, float z1);
     float meanq_vx();
     float meanq_vy();

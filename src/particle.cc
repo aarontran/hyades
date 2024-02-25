@@ -81,19 +81,16 @@ void ParticleArray::initialize(int count, float weight) {
   np = np+count;
 }
 
-// Initialize particle velocities as Maxwellian
-void ParticleArray::maxwellian(int i0, int i1, float vth, float vdrx,
-                               float vdry, float vdrz) {
+// Initialize Maxwellian distribution along one velocity coordinate
+void ParticleArray::maxwellian1d(int i0, int i1, const char* uwhat, float vth, float vdr) {
 
-  if (i0 >= np || i1 <= i0) {
-    printf("WARNING: out of bounds in particle Maxwellian init!\n");
-    return;
-  }
+  assert(i0 < i1 && i1 <= np);
+  assert(strcmp(uwhat,"ux") == 0 || strcmp(uwhat,"uy") == 0 || strcmp(uwhat,"uz") == 0);
+
   particle_t* p = &(p0[i0]);
   for (int ii=i0; ii<i1; ++ii) {
-    p->ux = rng.normal(vdrx, vth);
-    p->uy = rng.normal(vdry, vth);
-    p->uz = rng.normal(vdrz, vth);
+    float* ucomp = pseek_fkey(uwhat, p);
+    *ucomp = rng.normal(vdr, vth);
     ++p;
   }
 }
