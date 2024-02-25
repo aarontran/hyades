@@ -1,5 +1,7 @@
+#include <assert.h>
 #include <stdlib.h>  // for NULL
 #include <stdio.h>  // for printf
+#include <string.h>  // for strcmp
 
 #include "field.h"
 
@@ -14,6 +16,37 @@ int FieldArray::ivoxel(int ii, int jj, int kk) {
 // Access fields using 3D integer tuple of grid mesh indices, 0-indexed
 field_t* FieldArray::voxel(int ii, int jj, int kk) {
   return &( f0[ivoxel(ii,jj,kk)] );
+}
+
+// Low-level method to access field_t struct members by name,
+// returning a pointer (called "seek" rather than "get" because caller
+// can both read and write).
+float* FieldArray::fseek_key(const char* name, field_t* ff) {
+  if (strcmp(   "ex",name)==0) return &(ff->ex);
+  if (strcmp(   "ey",name)==0) return &(ff->ey);
+  if (strcmp(   "ez",name)==0) return &(ff->ez);
+  if (strcmp( "tmpx",name)==0) return &(ff->tmpx);
+  if (strcmp(   "bx",name)==0) return &(ff->bx);
+  if (strcmp(   "by",name)==0) return &(ff->by);
+  if (strcmp(   "bz",name)==0) return &(ff->bz);
+  if (strcmp( "tmpy",name)==0) return &(ff->tmpy);
+  if (strcmp(  "bx0",name)==0) return &(ff->bx0);
+  if (strcmp(  "by0",name)==0) return &(ff->by0);
+  if (strcmp(  "bz0",name)==0) return &(ff->bz0);
+  if (strcmp( "tmpz",name)==0) return &(ff->tmpz);
+  if (strcmp(  "jfx",name)==0) return &(ff->jfx);
+  if (strcmp(  "jfy",name)==0) return &(ff->jfy);
+  if (strcmp(  "jfz",name)==0) return &(ff->jfz);
+  if (strcmp( "rhof",name)==0) return &(ff->rhof);
+  if (strcmp( "jfx0",name)==0) return &(ff->jfx0);
+  if (strcmp( "jfy0",name)==0) return &(ff->jfy0);
+  if (strcmp( "jfz0",name)==0) return &(ff->jfz0);
+  if (strcmp("rhof0",name)==0) return &(ff->rhof0);
+  if (strcmp( "smex",name)==0) return &(ff->smex);
+  if (strcmp( "smey",name)==0) return &(ff->smey);
+  if (strcmp( "smez",name)==0) return &(ff->smez);
+  if (strcmp(  "pad",name)==0) return &(ff->pad);
+  assert(0);
 }
 
 // Low-level method to access field_t struct members by linear index,

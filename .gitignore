@@ -1,5 +1,9 @@
 # Compiled Object files
 *.o
 
+# Output dumps
+output
+*.hdf5
+
 # default executable
 hyades

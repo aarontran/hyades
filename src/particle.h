@@ -41,6 +41,7 @@ class ParticleArray {
     void move_uncenter();
     void deposit(int unwind);
     void boundary_teleport();
+    void dump(int step);
 
   private:
     FieldArray   fa;

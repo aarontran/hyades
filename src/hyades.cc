@@ -3,6 +3,8 @@
 #include <stdio.h>  // for printf
 #include <omp.h>
 
+#include <filesystem>
+
 #include "field.h"
 #include "interp.h"
 #include "param.h"
@@ -21,9 +23,9 @@ int main(int argc, char* argv[]) {
   // * Ohm's law Laplacian
 
   param_t        par;
-  //par.idump = 100;
+  par.idump = 20;
   //par.isort = 20;
-  par.ilast = 10;
+  par.ilast = 100;
   par.Lx = 10;
   par.Ly = 10;
   par.Lz = 10;
@@ -110,6 +112,12 @@ int main(int argc, char* argv[]) {
   //sim->fa   = fa
   //sim->ions = ions
 
+  if (par.idump > 0) {
+    std::filesystem::create_directory("output");
+    fa.dump(0);
+    //ions.dump(0, "output");  // not implemented
+  }
+
   // --------------------------------------------------------------------------
   // Evolution
 
@@ -139,7 +147,10 @@ int main(int argc, char* argv[]) {
 
     step++;
 
-    //if (step % par->idump == 0) diagnostics();  // not implemented
+    if (par.idump > 0 && step % par.idump == 0) {
+      fa.dump(step);
+      //ions.dump(step, "output");  // not implemented
+    }
 
   }
 

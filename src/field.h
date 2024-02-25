@@ -1,10 +1,12 @@
 #ifndef FIELD_H
 #define FIELD_H
 
+#include "hdf5.h"
+
 typedef struct field {
   // If you change struct layout, also update FieldArray member data and
-  // subroutines: nfstruct, fseek_one(...), and any other code that accesses
-  // field members by explicit index
+  // subroutines: nfstruct, dump(...), fseek_one(...), fseek_key(...), and any
+  // other code that accesses struct members by explicit index or name
   float ex,     ey,     ez,     tmpx;
   float bx,     by,     bz,     tmpy;
   float bx0,    by0,    bz0,    tmpz;
@@ -58,6 +60,7 @@ class FieldArray {
     // Dummy vars: ii,jj,kk for grid indices; mm for field struct members.
     field_t*      voxel(int ii, int jj, int kk);
     int          ivoxel(int ii, int jj, int kk);
+    float*    fseek_key(const char* name,field_t* ff);
     float*    fseek_one(int mm,          field_t* ff);
     void       fset_one(int mm, float v, field_t* ff);
     void       fset_all(        float v, field_t* ff);
@@ -104,6 +107,11 @@ class FieldArray {
     // High-level methods for top-level hybrid algorithm
     void advance_eb_rk4_ctrmesh   (int isub, int nsub);
     void advance_e_ctrmesh        (float frac);
+
+    // High-level dump methods
+    void dump (int step);
+    void hputf(hid_t file_id, const char* field_name);
+    //void hputd(hid_t file_id, const char* field_name);
 
 };
 
