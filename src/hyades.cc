@@ -67,7 +67,10 @@ int main(int argc, char* argv[]) {
   fa.mesh_set_b(0, 0, 1);
   fa.mesh_set_e(0, 0, 0);
 
-  ions.initialize(npart);
+  // Charge per macro ion
+  double weight = par.Lx*par.Ly*par.Lz/(par.nppc*par.nx*par.ny*par.nz);
+
+  ions.initialize(npart, weight);
   ions.maxwellian(0, npart, vthi, 10., 0, 0);
   ions.uniform(0, npart, 0., par.Lx, 0., par.Ly, 0., par.Lz);
 

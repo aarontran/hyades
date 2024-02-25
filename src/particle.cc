@@ -58,7 +58,7 @@ void ParticleArray::sort() {
 }
 
 // Initialize particles with zero position and velocity
-void ParticleArray::initialize(int count) {
+void ParticleArray::initialize(int count, float weight) {
 
   if (np+count > npmax) {
     printf("ERROR: particle overflow requested %d max %d\n", np+count, npmax);
@@ -74,7 +74,7 @@ void ParticleArray::initialize(int count) {
     p->ux  = 0;
     p->uy  = 0;
     p->uz  = 0;
-    p->w   = 1;
+    p->w   = weight;
     p->ind = ii;
     ++p;
   }
