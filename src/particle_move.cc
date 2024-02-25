@@ -48,7 +48,7 @@ void ParticleArray::move() {
     float cbz  = ia.bzloc(ic, dx, dy, dz);
 
     //if (ip == 0) {
-    //  printf("mover ind %d xyz %f %f %f uxyz %f %f %f . . . ixyz %d %d %d dxyz %f %f %f ha %f %f %f cb %f %f %f\n",
+    //  printf("mover ind %d xyz %.3f %.3f %.3f uxyz % .3f % .3f % .3f . . . ixyz %d %d %d dxyz % .3f % .3f % .3f haxyz % f % f % f cbxyz % f % f % f\n",
     //      p->ind, p->x,p->y,p->z, p->ux,p->uy,p->uz,
     //      ix,iy,iz, dx,dy,dz, hax,hay,haz, cbx,cby,cbz
     //  );
@@ -286,7 +286,7 @@ void ParticleArray::deposit(int unwind) {
     float wmz = qw*( v2 - one )*( v2 - one );
 
     //if (ip == 0) {
-    //  printf("depst ind %d xmh %f %f %f uxyz %f %f %f . . . ixmh %d %d %d v012 %f %f %f weights %f %f %f %f %f %f %f\n",
+    //  printf("depst ind %d xmh %.3f %.3f %.3f uxyz % .3f % .3f % .3f . . . ixmh %d %d %d v012 % .3f % .3f % .3f shape %f %f %f %f %f %f %f\n",
     //      p->ind, xmh,ymh,zmh, p->ux,p->uy,p->uz,
     //      ix,iy,iz, v0,v1,v2,
     //      w0, wx, wy, wz, wmx, wmy, wmz

@@ -1,9 +1,61 @@
-# Compiled Object files
-*.o
-
-# Output dumps
+# Hyades Output dumps
 output
 *.hdf5
 
-# default executable
+# Hyades default executable
 hyades
+
+# -------------------------------------------
+# Exclusions from github.com/github/gitignore
+# -------------------------------------------
+
+# C/C++ Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# C/C++ Object files
+*.o
+
+# C/C++ Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# C/C++ Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Python Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Mac OS - General
+.DS_Store
+.AppleDouble
+.LSOverride
+# Mac OS - Icon must end with two \r
+Icon
+# Mac OS - Thumbnails
+._*
+
+# Dropbox settings and caches
+.dropbox
+.dropbox.attr
+.dropbox.cache
+
+# Vim swap files etc.
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+*.un~
+Session.vim
+.netrwhist
+*~
