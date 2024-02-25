@@ -5,25 +5,22 @@
 #include "interp.h"
 #include "particle.h"
 
-void ParticleArray::move_deposit() {
+// =============================================
+// Particle Boris pusher copied from Hybrid-VPIC
+// src/species_advance/standard/hyb_advance_p.cc
+// =============================================
+
+void ParticleArray::move() {
 
   const float one            = 1.;
   const float two            = 2.;
-  const float three          = 3.;
   const float one_third      = 1./3.;
   const float one_half       = 1./2.;
-  const float one_twelfth    = 1./12.;
   const float two_fifteenths = 2./15.;
-  const float cdt_dx         = fa.dt/fa.hx;  // implicit c=1 in c*dt/dx
-  const float cdt_dy         = fa.dt/fa.hy;
-  const float cdt_dz         = fa.dt/fa.hz;
-
-  float qdt_2mc = (qsp*fa.dt)/(2*msp);  // implicit c=1 in q*dt/(2*m*c)
-
-  // =============================================
-  // Particle Boris pusher copied from Hybrid-VPIC
-  // src/species_advance/standard/hyb_advance_p.cc
-  // =============================================
+  const float qdt_2mc = (qsp*fa.dt)/(2*msp);  // q*dt/(2*m*c) with c=1
+  const float cdt_dx  = fa.dt/fa.hx;          // c*dt/dx with c=1
+  const float cdt_dy  = fa.dt/fa.hy;
+  const float cdt_dz  = fa.dt/fa.hz;
 
   // Note: some arithmetic ops are NOT optimized; beware compiler re-ordering
   // of math b/c you may lose precision.
@@ -102,74 +99,167 @@ void ParticleArray::move_deposit() {
 
   }  // end particle mover loop
 
-  // ==========================================
-  // Deposit charge and current density on grid
-  // ==========================================
-  //
-  // ------------------------------
-  // Notes on the deposit algorithm
-  // ------------------------------
-  //
-  // Hybrid-VPIC uses accumulator arrays with 28 entries
-  // to allow pipelining/threading of the current accumulation.
-  //
-  //   hyb_reduce_accumulators.cc does some magic for threading...
-  //   hyb_unload_accumulator.cc  dumps into the field arrays
-  //
-  // I am NOT GONNA DO THAT.  DO THE DUMB THING until we can prove the
-  // performance gain is needed.
-  // Deposit on field arrays instead of using separate accumulator
-  // HOWEVER, that means we MUST the deposit step outside the mover
-  // loop because the deposit cannot be easily parallelized.
-  //
-  // ------------------------------------
-  // Notes on cell/grid boundary handling
-  // ------------------------------------
-  //
-  // Numerical approaches for particles crossing cell boundaries and crossing
-  // grid boundaries?
-  //
-  // 1. TRISTAN: split the move/deposit loops and handle particle
-  //             communication during deposit step, where you need
-  //             to check the mid-point and final-points both.
-  //
-  // 2. Hybrid-VPIC: move/deposit together for the "common" case of
-  //                 particles staying entirely inside cell.  The floating
-  //                 point calculation is highly optimized when combined,
-  //                 e.g. you don't need to "unwind" the trajectory.
-  //                 So this works GREAT for cold plasma or small timestep.
-  //
-  // It can be useful to make exception lists for the particles that need to
-  // be communicated b/c that clobbers cache locality... VPIC takes this so far
-  // as to effectively exception lists for particles crossing CELL boundaries,
-  // not just GRID boundaries.
-  //
-  // Deposit before teleport, how to make it work?
-  // Use TWO ghost cells instead of ONE.
-  // That way, any particle crossing off grid edge can still deposit, we don't
-  // need to clobber...
-  //
-  // Teleport then deposit?  Would that work better?
-  //   For NGP + QS shapes, then only need one ghost cell and don't need
-  //   corner ghosts so a little easier to do communication.
-  // With other higher-order shapes, you need to deposit in corners regardless
-  // of whether you teleport before or after the deposit.
-  //
-  // Not obvious to me whether deposit->teleport or teleport->deposit is
-  // better.  Shouldn't matter if you are careful.
-  //
-  // For my use case, I think it's best to split the loops so the mover
-  // can be easily vectorized; the deposit is hard to vectorize without
-  // the accumulator arrays or careful OpenMP threading...
+} // end ParticleArray::move()
+
+
+// Similar to ParticleArray::move(), but use fields at t=0 to push particle
+// momenta BACKWARDS 1/2 step in time and do not update particle positions.
+// In the Boris push,
+// * skip the first "half E accel"
+// * apply B rotation using a half timestep
+// Used only to initialize the simulation.
+// This corresponds to Ari's "hyb_uncenter_p(...)"
+void ParticleArray::move_uncenter() {
+
+  const float one            = 1.;
+  const float two            = 2.;
+  const float one_third      = 1./3.;
+  const float one_half       = 1./2.;
+  const float two_fifteenths = 2./15.;
+  const float qdt_2mc = -1 * (qsp*fa.dt)/(2*msp); // -1*q*dt/(2*m*c) with c=1
+  const float qdt_4mc = -1 * (qsp*fa.dt)/(4*msp); // -1*q*dt/(4*m*c) with c=1
+
+  // Note: some arithmetic ops are NOT optimized; beware compiler re-ordering
+  // of math b/c you may lose precision.
+
+  for (int ip=0; ip<np; ++ip) {
+
+    particle_t* p = &(p0[ip]);
+
+    // Voxel indices
+    int ix = (int)(p->x + one_half);  // particles use cell-centered coordinates
+    int iy = (int)(p->y + one_half);
+    int iz = (int)(p->z + one_half);
+    // Voxel offsets on interval [-1,1]
+    float dx = two*((p->x) - ix);
+    float dy = two*((p->y) - iy);
+    float dz = two*((p->z) - iz);
+
+    interp_t* ic = ia.voxel(ix,iy,iz);
+
+    float hax  = qdt_2mc * ia.exloc(ic, dx, dy, dz);
+    float hay  = qdt_2mc * ia.eyloc(ic, dx, dy, dz);
+    float haz  = qdt_2mc * ia.ezloc(ic, dx, dy, dz);
+    float cbx  = ia.bxloc(ic, dx, dy, dz);
+    float cby  = ia.byloc(ic, dx, dy, dz);
+    float cbz  = ia.bzloc(ic, dx, dy, dz);
+
+    // Update momentum t-1/2 to t+1/2
+    float ux   = p->ux;                       // Load momentum
+    float uy   = p->uy;
+    float uz   = p->uz;
+    //ux  += hax;                             // Half advance E SKIPPED
+    //uy  += hay;
+    //uz  += haz;
+    //float v0   = qdt_2mc;
+    float v0   = qdt_4mc;                     // HALVED from usual Boris push
+    float v1   = cbx*cbx + (cby*cby + cbz*cbz);
+    float v2   = (v0*v0)*v1;
+    float v3   = v0*(one+v2*(one_third+v2*two_fifteenths));
+    float v4   = v3/(one+v1*(v3*v3));
+    v4  += v4;
+    v0   = ux + v3*( uy*cbz - uz*cby );       // Boris - uprime
+    v1   = uy + v3*( uz*cbx - ux*cbz );
+    v2   = uz + v3*( ux*cby - uy*cbx );
+    ux  += v4*( v1*cbz - v2*cby );            // Boris - rotation
+    uy  += v4*( v2*cbx - v0*cbz );
+    uz  += v4*( v0*cby - v1*cbx );
+    ux  += hax;                               // Half advance E
+    uy  += hay;
+    uz  += haz;
+    p->ux = ux;                               // Store momentum
+    p->uy = uy;
+    p->uz = uz;
+
+  }  // end particle mover loop
+
+} // end ParticleArray::move()
+
+
+// ==========================================
+// Deposit charge and current density on grid
+// ==========================================
+//
+// ------------------------------
+// Notes on the deposit algorithm
+// ------------------------------
+//
+// Hybrid-VPIC uses accumulator arrays with 28 entries
+// to allow pipelining/threading of the current accumulation.
+//
+//   hyb_reduce_accumulators.cc does some magic for threading...
+//   hyb_unload_accumulator.cc  dumps into the field arrays
+//
+// I am NOT GONNA DO THAT.  DO THE DUMB THING until we can prove the
+// performance gain is needed.
+// Deposit on field arrays instead of using separate accumulator
+// HOWEVER, that means we MUST the deposit step outside the mover
+// loop because the deposit cannot be easily parallelized.
+//
+// ------------------------------------
+// Notes on cell/grid boundary handling
+// ------------------------------------
+//
+// Numerical approaches for particles crossing cell boundaries and crossing
+// grid boundaries?
+//
+// 1. TRISTAN: split the move/deposit loops and handle particle
+//             communication during deposit step, where you need
+//             to check the mid-point and final-points both.
+//
+// 2. Hybrid-VPIC: move/deposit together for the "common" case of
+//                 particles staying entirely inside cell.  The floating
+//                 point calculation is highly optimized when combined,
+//                 e.g. you don't need to "unwind" the trajectory.
+//                 So this works GREAT for cold plasma or small timestep.
+//
+// It can be useful to make exception lists for the particles that need to
+// be communicated b/c that clobbers cache locality... VPIC takes this so far
+// as to effectively exception lists for particles crossing CELL boundaries,
+// not just GRID boundaries.
+//
+// Deposit before teleport, how to make it work?
+// Use TWO ghost cells instead of ONE.
+// That way, any particle crossing off grid edge can still deposit, we don't
+// need to clobber...
+//
+// Teleport then deposit?  Would that work better?
+//   For NGP + QS shapes, then only need one ghost cell and don't need
+//   corner ghosts so a little easier to do communication.
+// With other higher-order shapes, you need to deposit in corners regardless
+// of whether you teleport before or after the deposit.
+//
+// Not obvious to me whether deposit->teleport or teleport->deposit is
+// better.  Shouldn't matter if you are careful.
+//
+// For my use case, I think it's best to split the loops so the mover
+// can be easily vectorized; the deposit is hard to vectorize without
+// the accumulator arrays or careful OpenMP threading...
+
+void ParticleArray::deposit(int unwind) {
+
+  const float one            = 1.;
+  const float two            = 2.;
+  const float three          = 3.;
+  const float one_half       = 1./2.;
+  const float one_twelfth    = 1./12.;
+
+  const float cdt_dx         = fa.dt/fa.hx;  // implicit c=1 in c*dt/dx
+  const float cdt_dy         = fa.dt/fa.hy;
+  const float cdt_dz         = fa.dt/fa.hz;
+
+  // Deposit at particle streak midpoint,
+  // or deposit at current particle position?
+  const float frac = (unwind == 1) ? one_half : 0;
 
   for (int ip=0; ip<np; ++ip) {
 
     particle_t* p = &(p0[ip]);
 
     // Unwind to get streak midpoint
-    float xmh = (p->x - one_half*(p->ux)*cdt_dx);  // xmh = x minus half step
-    float ymh = (p->y - one_half*(p->uy)*cdt_dx);
-    float zmh = (p->z - one_half*(p->uz)*cdt_dx);
+    float xmh = (p->x - frac*(p->ux)*cdt_dx);  // xmh = x minus half step
+    float ymh = (p->y - frac*(p->uy)*cdt_dy);
+    float zmh = (p->z - frac*(p->uz)*cdt_dz);
 
     // Midpoint voxel indices
     int ix = (int)(xmh + one_half);  // particles use cell-centered coordinates
@@ -251,9 +341,13 @@ void ParticleArray::move_deposit() {
 
   }  // end particle deposit loop
 
-  // =====================================
-  // Teleport particle positions if needed
-  // =====================================
+} // end ParticleArray::deposit()
+
+
+// =====================================
+// Teleport particle positions if needed
+// =====================================
+void ParticleArray::boundary_teleport() {
 
   // Try to be consistent about usage of >= versus > etc...
   // but maybe moot given vagaries of floating point...
@@ -284,5 +378,4 @@ void ParticleArray::move_deposit() {
     if (p->z >= z1) { p->z -= nz; };
   }  // end particle teleport loop
 
-  return;
-}
+} // end ParticleArray::boundary_teleport()

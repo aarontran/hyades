@@ -37,7 +37,10 @@ class ParticleArray {
     float meanq_vz();
     float meanq_vsq();
 
-    void move_deposit();
+    void move();
+    void move_uncenter();
+    void deposit(int unwind);
+    void boundary_teleport();
 
   private:
     FieldArray   fa;

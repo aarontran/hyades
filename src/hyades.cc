@@ -66,11 +66,44 @@ int main(int argc, char* argv[]) {
   ions.maxwellian(0, npart, vthi, 10., 0, 0);
   ions.uniform(0, npart, 0., par.Lx, 0., par.Ly, 0., par.Lz);
 
-  // Set initial E/B values on grid
-  // This requires deposition of ion moments
-  //field_advance(fa, ions);
-  fa.mesh_set_jrho(0., 0., 0., 0.);     // TODO not correct, need to deposit
-  fa.mesh_set_jrho0();                  // ion moments --ATr,2024feb24
+  // At simulation start, the user provides:
+  //     particle r at t=0
+  //     particle v at t=0
+  //     field B at t=0
+  //
+  // To begin the simulation, we need:
+  //     particle r at t=0
+  //     particle v at t=-1/2
+  //     field B at t=0
+  //     field E at t=0
+  //     fields j,rho at t=-1/2
+  //
+  // Initialize E at t=0 and "unwind" the particles to t=-1/2 as follows.
+  // Step 1: deposit ion moments at t=0 into both current j/rho and old j/rho
+  // Step 2: advance E with frac=0.  This nominally averages old/new ion
+  //         moments stored at t=+/-1/2; "cheat" using t=0 for both old/new.
+  // Step 3: unwind particle velocities to t=-1/2, keep t=0 positions
+  // Step 4: deposit particle moments at t=-1/2
+
+  // Step 1.
+  fa.mesh_set_jrho(0., 0., 0., 0.);
+  ions.deposit(0);                  // arg=0 to deposit using r at t=0
+  fa.ghost_deposit_jrho();
+  fa.ghost_copy_jrho();             // j,rho at t=0
+  fa.mesh_set_jrho0();              // old j,rho at t=0
+
+  // Step 2.
+  fa.ghost_copy_b();
+  fa.advance_e_ctrmesh(0.);         // E at t=0 using old=new ion moments
+
+  // Step 3.
+  ions.move_uncenter();             // v at t=-1/2, keeping r at t=0
+
+  // Step 4.
+  fa.mesh_set_jrho(0., 0., 0., 0.);
+  ions.deposit(1);                  // arg=1 to deposit using r at t=-1/2
+  fa.ghost_deposit_jrho();
+  fa.ghost_copy_jrho();             // j,rho at t=-1/2
 
   //Simulation* sim = Simulation(...);  // may want for checkpoints eventually
   //sim->par  = par
@@ -92,9 +125,11 @@ int main(int argc, char* argv[]) {
     fa.ghost_copy_eb();             // update E/B in ghosts
     ia.update();                    // compute E/B field interpolation coeffs
 
-    ions.move_deposit();            // r,v advanced
+    ions.move();                    // r,v advanced on ghosts
+    ions.deposit(1);                // j   advanced on ghosts
+    ions.boundary_teleport();       // r,v advanced
     fa.ghost_deposit_jrho();
-    fa.ghost_copy_jrho();           // j advanced on live+ghost
+    fa.ghost_copy_jrho();           // j advanced
     //fa.smooth_jrho();             // not implemented
 
     for (int isub=0; isub<field_nsub; ++isub) {

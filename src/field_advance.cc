@@ -201,8 +201,9 @@ void FieldArray::advance_eb_rk4_ctrmesh(int isub, int nsub) {
 // advance_e_ctrmesh() implements Ohm's law assuming that (E, B, rhof, jf) are
 // all stored on a cell-centered mesh.
 // Inputs:
-//    frac = 0 to 1 chooses a time between t_n to t_{n+1} for ion moments.
-//    The stored B field must updated to this time already.
+//    frac = 0 to 1 chooses a time between t_n to t_{n+1} by extrapolating
+//           ion moments at t_{n-1/2} and t_{n+1/2}.
+//    The stored B field must be updated to the "target" time already.
 // Result:
 //    E field updated on live AND ghost cells.
 // ----------------------------------------------------------------------------
