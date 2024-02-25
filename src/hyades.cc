@@ -35,6 +35,9 @@ int main(int argc, char* argv[]) {
   par.ng =  2;    // number of ghost cells
   par.seed = 1;   // zero-th particle gets teleported so useful test case
 
+  par.stridep = 100;  // particle output stride
+  //par.stridef = 100;  // fields output stride  // not implemented
+
   par.nppc  = 100;
   par.npmax = 200000;
 
@@ -115,7 +118,7 @@ int main(int argc, char* argv[]) {
   if (par.idump > 0) {
     std::filesystem::create_directory("output");
     fa.dump(0);
-    ions.dump(0);
+    ions.dump(0, par.stridep);
   }
 
   {
@@ -157,7 +160,7 @@ int main(int argc, char* argv[]) {
 
     if (par.idump > 0 && step % par.idump == 0) {
       fa.dump(step);
-      ions.dump(step);
+      ions.dump(step, par.stridep);
     }
 
   }

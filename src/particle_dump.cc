@@ -9,7 +9,7 @@
 #include "interp.h"
 #include "particle.h"
 
-void ParticleArray::dump(int step) {
+void ParticleArray::dump(int step, int stride) {
 
   char fname[100];
   snprintf(fname, 100, "output/prtl.%d.hdf5", step);
@@ -19,15 +19,15 @@ void ParticleArray::dump(int step) {
   hid_t file_id = H5Fcreate(fname, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
   // float (32-bit) outputs
-  hputf( file_id,   "x" );
-  hputf( file_id,   "y" );
-  hputf( file_id,   "z" );
-  hputf( file_id,  "ux" );
-  hputf( file_id,  "uy" );
-  hputf( file_id,  "uz" );
+  hputf( file_id,   "x", stride );
+  hputf( file_id,   "y", stride );
+  hputf( file_id,   "z", stride );
+  hputf( file_id,  "ux", stride );
+  hputf( file_id,  "uy", stride );
+  hputf( file_id,  "uz", stride );
 
   // int (32-bit) outputs
-  hputi( file_id, "ind" );
+  hputi( file_id, "ind", stride );
 
   status = H5Fclose(file_id);
   assert(status >= 0);
@@ -37,16 +37,23 @@ void ParticleArray::dump(int step) {
 }
 
 // hputf = put float-type particle attribute buffer into HDF5 file object
-void ParticleArray::hputf(hid_t file_id, const char* attr_name) {
+void ParticleArray::hputf(hid_t file_id, const char* attr_name, int stride) {
 
-  float buf[np];
+  int npout = (int)(np/stride);
+
+  float buf[npout];
+  int jj = 0;
   particle_t* p = p0;
   for (int ii=0; ii<np; ++ii) {
-    buf[ii] = *(pseek_fkey(attr_name, p));
+    if (p->ind % stride == 0) {
+      buf[jj] = *(pseek_fkey(attr_name, p));
+      ++jj;
+    }
     ++p;
   }
+  assert(jj == npout);
 
-  hsize_t dims[1] = { (hsize_t)np };
+  hsize_t dims[1] = { (hsize_t)npout };
 
   hid_t dspace_id = H5Screate_simple(1, dims, NULL);
 
@@ -66,21 +73,28 @@ void ParticleArray::hputf(hid_t file_id, const char* attr_name) {
 }
 
 // hputi = put int32_t particle attribute buffer into HDF5 file object
-void ParticleArray::hputi(hid_t file_id, const char* attr_name) {
+void ParticleArray::hputi(hid_t file_id, const char* attr_name, int stride) {
 
   // Note: HDF5 "C9x" integer types let us specify bit width while using the
   // native endianness (in contrast to H5T_NATIVE_INT or H5T_STD_U32LE).
   // Documentation is at:
   // https://docs.hdfgroup.org/hdf5/develop/group___p_d_t_c9x.html
 
-  int32_t buf[np];
+  int npout = (int)(np/stride);
+
+  int32_t buf[npout];
+  int jj = 0;
   particle_t* p = p0;
   for (int ii=0; ii<np; ++ii) {
-    buf[ii] = *(pseek_ikey(attr_name, p));
+    if (p->ind % stride == 0) {
+      buf[jj] = *(pseek_ikey(attr_name, p));
+      ++jj;
+    }
     ++p;
   }
+  assert(jj == npout);
 
-  hsize_t dims[1] = { (hsize_t)np };
+  hsize_t dims[1] = { (hsize_t)npout };
 
   hid_t dspace_id = H5Screate_simple(1, dims, NULL);
 

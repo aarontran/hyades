@@ -20,6 +20,9 @@ typedef struct param {
   int npmax;
   int nppc;
 
+  int stridep;
+  //int stridef;
+
 } param_t;
 
 #endif  //PARAM_H
