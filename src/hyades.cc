@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
   if (par.idump > 0) {
     std::filesystem::create_directory("output");
     fa.dump(0);
-    //ions.dump(0, "output");  // not implemented
+    ions.dump(0);
   }
 
   {
@@ -157,7 +157,7 @@ int main(int argc, char* argv[]) {
 
     if (par.idump > 0 && step % par.idump == 0) {
       fa.dump(step);
-      //ions.dump(step, "output");  // not implemented
+      ions.dump(step);
     }
 
   }

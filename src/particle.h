@@ -1,10 +1,15 @@
 #ifndef PARTICLE_H
 #define PARTICLE_H
 
+#include "hdf5.h"
+
 #include "field.h"
 #include "random.h"
 
 typedef struct particle {
+  // If you change struct layout, also update ParticleArray subroutines
+  // dump(...), pseek_fkey(...), pseek_ikey(...), and any other code that
+  // accesses struct members by explicit index or name
   float  x,  y,  z;
   float ux, uy, uz;
   float  w;
@@ -28,6 +33,13 @@ class ParticleArray {
     int np;     // current number of particles
     particle_t* p0;  // particle array pointer
 
+    // --------------------------------------------------
+    // Low-level methods to get/set particle attribute values
+    float*   pseek_fkey(const char* name, particle_t* p);
+    int32_t* pseek_ikey(const char* name, particle_t* p);
+
+    // --------------------------------------------------
+    // High-level methods for top-level hybrid algorithm
     void sort();
     void initialize(int count);
     void maxwellian(int i0, int i1, float vth, float vdrx, float vdry, float vdrz);
@@ -41,7 +53,11 @@ class ParticleArray {
     void move_uncenter();
     void deposit(int unwind);
     void boundary_teleport();
+
+    // High-level dump methods
     void dump(int step);
+    void hputf(hid_t file_id, const char* attr_name);
+    void hputi(hid_t file_id, const char* attr_name);
 
   private:
     FieldArray   fa;

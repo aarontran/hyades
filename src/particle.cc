@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdlib.h>  // for malloc
 #include <stdio.h>  // warn about buffer overflows
+#include <string.h>
 
 #include "field.h"
 #include "interp.h"
@@ -27,6 +28,28 @@ ParticleArray::ParticleArray(float qsp_, float msp_, int npmax_, FieldArray fa_,
   np = 0;
   p0 = (particle_t*) malloc( npmax_*sizeof(particle_t) );
   //rng = rng_;
+}
+
+// Low-level method to access particle_t struct members by name,
+// returning a pointer (called "seek" rather than "get" because caller
+// can both read and write).
+float* ParticleArray::pseek_fkey(const char* name, particle_t* p) {
+  if (strcmp( "x",name)==0) return &(p->x);
+  if (strcmp( "y",name)==0) return &(p->y);
+  if (strcmp( "z",name)==0) return &(p->z);
+  if (strcmp("ux",name)==0) return &(p->ux);
+  if (strcmp("uy",name)==0) return &(p->uy);
+  if (strcmp("uz",name)==0) return &(p->uz);
+  if (strcmp( "w",name)==0) return &(p->w);
+  assert(0);
+}
+
+// Low-level method to access particle_t struct members by name,
+// returning a pointer (called "seek" rather than "get" because caller
+// can both read and write).
+int32_t* ParticleArray::pseek_ikey(const char* name, particle_t* p) {
+  if (strcmp("ind",name)==0) return &(p->ind);
+  assert(0);
 }
 
 // Sort the particle list
