@@ -118,6 +118,14 @@ int main(int argc, char* argv[]) {
     //ions.dump(0, "output");  // not implemented
   }
 
+  {
+    //field_t* fv = fa.voxel(2,2,2); // Useful to check deposit at ghosts
+    field_t* fv = fa.voxel(5,5,5);
+    printf("init field bx %f by %f bz %f\n", fv->bx, fv->by, fv->bz);
+    printf("init field ex %f ey %f ez %f\n", fv->ex, fv->ey, fv->ez);
+    printf("init field jfx %f jfy %f jfz %f rhof %f\n", fv->jfx, fv->jfy, fv->jfz, fv->rhof);
+  }
+
   // --------------------------------------------------------------------------
   // Evolution
 
@@ -163,12 +171,15 @@ int main(int argc, char* argv[]) {
   // --------------------------------------------------------------------------
   // Finalize
 
-  printf("interp array dbxdx %f\n", ia.voxel(3,3,3)->dbxdx);
-  printf("field array bx %f\n", fa.voxel(5,5,5)->bx);
-  printf("field array jfx %f\n", fa.voxel(2,2,2)->jfx);
-  printf("field array jfy %f\n", fa.voxel(2,2,2)->jfy);
-  printf("field array jfz %f\n", fa.voxel(2,2,2)->jfz);
-  printf("field array rhof %f\n",fa.voxel(2,2,2)->rhof);
+  {
+    //printf("final interp array dbxdx %f\n", ia.voxel(3,3,3)->dbxdx);
+    //field_t* fv = fa.voxel(2,2,2); // Useful to check deposit at ghosts
+    field_t* fv = fa.voxel(5,5,5);
+    printf("\n");
+    printf("final field bx %f by %f bz %f\n", fv->bx, fv->by, fv->bz);
+    printf("final field ex %f ey %f ez %f\n", fv->ex, fv->ey, fv->ez);
+    printf("final field jfx %f jfy %f jfz %f rhof %f\n", fv->jfx, fv->jfy, fv->jfz, fv->rhof);
+  }
 
   free(ions.p0);
   free(ia.ic0);

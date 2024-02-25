@@ -50,12 +50,12 @@ void FieldArray::advance_eb_rk4_ctrmesh(int isub, int nsub) {
   // -------
   // Setup.
   // -------
-  field_t fv;
+  field_t* fv = f0;
   for (int ii = 0; ii < nvall; ++ii) {
-    fv = f0[ii];
-    fv.bx0  = fv.bx;
-    fv.by0  = fv.by;
-    fv.bz0  = fv.bz;
+    fv->bx0 = fv->bx;
+    fv->by0 = fv->by;
+    fv->bz0 = fv->bz;
+    ++fv;
   }
 
   // -------
