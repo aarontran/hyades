@@ -109,8 +109,9 @@ class FieldArray {
     void advance_e_ctrmesh        (float frac);
 
     // High-level dump methods
-    void dump (int step);
-    void hputf(hid_t file_id, const char* field_name);
+    void dump    (int step, const char* formatstr, bool with_ghost);
+    void hputf   (hid_t file_id, const char* field_name);
+    void hputf_gh(hid_t file_id, const char* field_name);
     //void hputd(hid_t file_id, const char* field_name);
 
 };

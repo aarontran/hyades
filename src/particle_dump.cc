@@ -9,10 +9,10 @@
 #include "interp.h"
 #include "particle.h"
 
-void ParticleArray::dump(int step, int stride) {
+void ParticleArray::dump(int step, const char* formatstr, int stride) {
 
   char fname[100];
-  snprintf(fname, 100, "output/prtl.%d.hdf5", step);
+  snprintf(fname, 100, formatstr, step);
 
   herr_t status;
 
@@ -39,13 +39,13 @@ void ParticleArray::dump(int step, int stride) {
 // hputf = put float-type particle attribute buffer into HDF5 file object
 void ParticleArray::hputf(hid_t file_id, const char* attr_name, int stride) {
 
-  int npout = (int)(np/stride);
+  int npout = (int)((np-1)/stride);
 
   float buf[npout];
   int jj = 0;
   particle_t* p = p0;
   for (int ii=0; ii<np; ++ii) {
-    if (p->ind % stride == 0) {
+    if (p->ind > 0 && p->ind % stride == 0) {
       buf[jj] = *(pseek_fkey(attr_name, p));
       ++jj;
     }
@@ -80,13 +80,13 @@ void ParticleArray::hputi(hid_t file_id, const char* attr_name, int stride) {
   // Documentation is at:
   // https://docs.hdfgroup.org/hdf5/develop/group___p_d_t_c9x.html
 
-  int npout = (int)(np/stride);
+  int npout = (int)((np-1)/stride);
 
   int32_t buf[npout];
   int jj = 0;
   particle_t* p = p0;
   for (int ii=0; ii<np; ++ii) {
-    if (p->ind % stride == 0) {
+    if (p->ind > 0 && p->ind % stride == 0) {
       buf[jj] = *(pseek_ikey(attr_name, p));
       ++jj;
     }

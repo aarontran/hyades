@@ -23,7 +23,8 @@ int main(int argc, char* argv[]) {
   // * Ohm's law Laplacian
 
   param_t        par;
-  par.idump = 20;
+  par.idumpf = 10;     // fields dump interval, 1 Omci^-1
+  par.idumpp =2000;     // particles dump interval, 20 Omci^-1
   //par.isort = 20;
   par.ilast = 100;
   par.Lx = 10;
@@ -120,10 +121,12 @@ int main(int argc, char* argv[]) {
   //sim->fa   = fa
   //sim->ions = ions
 
-  if (par.idump > 0) {
-    std::filesystem::create_directory("output");
-    fa.dump(0);
-    ions.dump(0, par.stridep);
+  std::filesystem::create_directory("output");
+  if (par.idumpf > 0) {
+    fa.dump(0, "output/flds.%d.hdf5", false);
+  }
+  if (par.idumpp > 0) {
+    ions.dump(0, "output/prtl.%d.hdf5", par.stridep);
   }
 
   {
@@ -163,9 +166,11 @@ int main(int argc, char* argv[]) {
 
     step++;
 
-    if (par.idump > 0 && step % par.idump == 0) {
-      fa.dump(step);
-      ions.dump(step, par.stridep);
+    if (par.idumpf > 0 && step % par.idumpf == 0) {
+      fa.dump(step, "output/flds.%d.hdf5", false);
+    }
+    if (par.idumpp > 0 && step % par.idumpp == 0) {
+      ions.dump(step, "output/prtls.%d.hdf5", par.stridep);
     }
 
   }

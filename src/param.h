@@ -3,7 +3,8 @@
 
 typedef struct param {
 
-  int idump;
+  int idumpp;
+  int idumpf;
   int isort;
   int ilast;
   int seed;

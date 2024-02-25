@@ -5,9 +5,9 @@ INCL= -I/Users/atran/opt/miniconda3/envs/wham/include
 LIBS= -L/Users/atran/opt/miniconda3/envs/wham/lib
 #INCL=
 #LIBS=
-FLAGS= -Wall -fopenmp -g -std=c++17
+FLAGS= -Wall -fopenmp -g -O0 -std=c++17
 #FLAGS= -lgomp -fopenmp
-#FLAGS= -fopenmp -Ofast -mcpu=native -mtune=native
+#FLAGS= -fopenmp -Ofast -mcpu=native -mtune=native -std=c++17
 #-fno-strict-aliasing  # this degrades performance by 20% ??
 # need std c++17 to get std::filesystem library
 
@@ -45,5 +45,6 @@ hyades: field.o field_advance.o field_constructor.o field_dump.o hyades.o interp
 all: hyades
 
 clean: 
-	rm -f hyades
-	rm -f *.o
+	rm -f   hyades
+	rm -f   *.o
+	rm -rf  output

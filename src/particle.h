@@ -55,7 +55,7 @@ class ParticleArray {
     void boundary_teleport();
 
     // High-level dump methods
-    void dump(int step, int stride);
+    void dump(int step, const char* formatstr, int stride);
     void hputf(hid_t file_id, const char* attr_name, int stride);
     void hputi(hid_t file_id, const char* attr_name, int stride);
 
