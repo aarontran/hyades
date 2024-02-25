@@ -311,6 +311,10 @@ void FieldArray::advance_e_ctrmesh(float frac) {
   }}}
 
   if (hyb_hypereta_ <= 0) {
+    // Field advance methods are responsible for updating their "own" ghosts.
+    // TODO branching returns here is a bad idea (basically a GOTO),
+    // split hyper-resistivity into its own method -ATr,2024feb25
+    ghost_copy_e();
     return;
   }
 
@@ -361,8 +365,9 @@ void FieldArray::advance_e_ctrmesh(float frac) {
   }}}
 
   // Field advance methods are responsible for updating their "own" ghosts.
+  // TODO branching returns here is a bad idea (basically a GOTO),
+  // split hyper-resistivity into its own method -ATr,2024feb25
   ghost_copy_e();
-
   return;
 
 }
