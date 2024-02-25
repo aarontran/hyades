@@ -242,11 +242,12 @@ void ParticleArray::deposit(int unwind) {
   const float two            = 2.;
   const float three          = 3.;
   const float one_half       = 1./2.;
-  const float one_twelfth    = 1./12.;
 
   const float cdt_dx         = fa.dt/fa.hx;  // implicit c=1 in c*dt/dx
   const float cdt_dy         = fa.dt/fa.hy;
   const float cdt_dz         = fa.dt/fa.hz;
+
+  const float qsp_rV_12 = qsp/(12*fa.hx*fa.hy*fa.hz);
 
   // Deposit at particle streak midpoint,
   // or deposit at current particle position?
@@ -270,7 +271,9 @@ void ParticleArray::deposit(int unwind) {
     float v1 = two*(ymh - iy);
     float v2 = two*(zmh - iz);
 
-    float qw = qsp * p->w * one_twelfth;
+    // Combined (charge x particle weight x inverse cell size) factor
+    // for deposit
+    float qw = p->w * qsp_rV_12;
 
     // Ari's quadratic spline deposit scheme
     // weights sum to 1, without the factor of q
