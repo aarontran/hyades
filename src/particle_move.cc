@@ -1,4 +1,4 @@
-#include <stdlib.h> // need stdlib to get int32_t at compile time???,
+#include <stdlib.h> // need stdlib or cstdint to get int32_t at compile time???,
                     // don't understand why --ATr,2024feb09
 #include <stdio.h>
 #include "field.h"
@@ -47,12 +47,12 @@ void ParticleArray::move() {
     float cby  = ia.byloc(ic, dx, dy, dz);
     float cbz  = ia.bzloc(ic, dx, dy, dz);
 
-    if (ip == 0) {
-      printf("mover ind %d xyz %f %f %f uxyz %f %f %f . . . ixyz %d %d %d dxyz %f %f %f ha %f %f %f cb %f %f %f\n",
-          p->ind, p->x,p->y,p->z, p->ux,p->uy,p->uz,
-          ix,iy,iz, dx,dy,dz, hax,hay,haz, cbx,cby,cbz
-      );
-    }
+    //if (ip == 0) {
+    //  printf("mover ind %d xyz %f %f %f uxyz %f %f %f . . . ixyz %d %d %d dxyz %f %f %f ha %f %f %f cb %f %f %f\n",
+    //      p->ind, p->x,p->y,p->z, p->ux,p->uy,p->uz,
+    //      ix,iy,iz, dx,dy,dz, hax,hay,haz, cbx,cby,cbz
+    //  );
+    //}
 
     // Update momentum t-1/2 to t+1/2
     float ux   = p->ux;                       // Load momentum
@@ -282,13 +282,13 @@ void ParticleArray::deposit(int unwind) {
     float wmy = qw*( v1 - one )*( v1 - one );
     float wmz = qw*( v2 - one )*( v2 - one );
 
-    if (ip == 0) {
-      printf("depst ind %d xmh %f %f %f uxyz %f %f %f . . . ixmh %d %d %d v012 %f %f %f weights %f %f %f %f %f %f %f\n",
-          p->ind, xmh,ymh,zmh, p->ux,p->uy,p->uz,
-          ix,iy,iz, v0,v1,v2,
-          w0, wx, wy, wz, wmx, wmy, wmz
-      );
-    }
+    //if (ip == 0) {
+    //  printf("depst ind %d xmh %f %f %f uxyz %f %f %f . . . ixmh %d %d %d v012 %f %f %f weights %f %f %f %f %f %f %f\n",
+    //      p->ind, xmh,ymh,zmh, p->ux,p->uy,p->uz,
+    //      ix,iy,iz, v0,v1,v2,
+    //      w0, wx, wy, wz, wmx, wmy, wmz
+    //  );
+    //}
 
     field_t* f0  = fa.voxel(ix,  iy,  iz  );
     field_t* fx  = fa.voxel(ix+1,iy,  iz  );
@@ -332,12 +332,12 @@ void ParticleArray::deposit(int unwind) {
     fmy->rhof += wmy;
     fmz->rhof += wmz;
 
-    if (ip == 0) {
-      printf("depst ind %d xmh %f %f %f uxyz %f %f %f . . . jrho %f %f %f %f\n",
-          p->ind, xmh,ymh,zmh, p->ux,p->uy,p->uz,
-          f0->jfx, f0->jfy, f0->jfz, f0->rhof
-      );
-    }
+    //if (ip == 0) {
+    //  printf("depst ind %d xmh %f %f %f uxyz %f %f %f . . . jrho %f %f %f %f\n",
+    //      p->ind, xmh,ymh,zmh, p->ux,p->uy,p->uz,
+    //      f0->jfx, f0->jfy, f0->jfz, f0->rhof
+    //  );
+    //}
 
   }  // end particle deposit loop
 

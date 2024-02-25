@@ -5,45 +5,45 @@ Hyades is a hybrid plasma simulation code (kinetic ions, fluid electrons).
 It's a simpler, stripped-down fork of the
 [Hybrid-VPIC](https://github.com/lanl/vpic-kokkos/tree/hybridVPIC)
 simulation code developed by
-[Le et al. (2023, Physics of Plasmas)](https://doi.org/10.1063/5.0146529).
+[Le et al. (2023)](https://doi.org/10.1063/5.0146529),
+which uses an explicit time-stepping algorithm similar to the H3D code
+([Karimabadi et al., 2014;](https://doi.org/10.1063/1.4882875)
+ [Le et al., 2016](https://doi.org/10.1063/1.4943893)).
 
 __Hyades is under construction and not yet working.__
 
 Compared to Hybrid-VPIC,
 * Hyades supports _only_ periodic boundary conditions.
-* Hyades can use any number of ghost cells on each coordinate axis, in order to
-  support higher-order particle shapes.
-* Hyades will be initially designed to run on shared-memory architectures,
-  targeting AMD Epyc 7763 nodes.
-* Hyades will not be MPI parallelized to start, but thread- and pipeline-level
-  parallelism (likely starting with OpenMP) or GPU acceleration wmay be tried
-  as time permits.
+* Hyades uses >=2 ghost cells on all coordinate axes.
+* Hyades is not parallelized at all.
 
-Hyades' initial goal is to implement a variety of hybrid plasma simulation
-algorithms to study and compare their performance.  This may include, in rough
-priority order:
-* Varying particle deposit and field-to-particle interpolation schemes for
-  density and current moments, enabled by arbitrary ghost cell count.
-* E/B field time-advance algorithms and mesh staggering.
-* Boundary conditions for fields and particles.
-* Electron inertia
+Hyades takes 4e-8 to 5e-8 seconds/particle/step using clang or Intel compilers
+with typical optimization flags (see Makefile) on reasonably modern (for 2024)
+hardware.  Performance was tested on a 10^3 domain with 1000 particles/cell for
+100 steps and 1 subcycle/field advance using commit `cdebbc6b`.
+
+Usage
+-----
+
+You will need a C++ compiler.
+Edit the Makefile and do:
+
+    make -j
+    ./hyades
+
+to perform a simulation.
+
+
+Developer notes
+---------------
 
 Hyades is implemented in C++, and its source code loosely aims to follow the
 [Google style guide](https://google.github.io/styleguide/cppguide.html).
 
 Hyades' software license is probably whatever applies to Hybrid-VPIC and VPIC.
 
-
-Developer notes
----------------
-
-Code should follow the
-* TODO update class member naming convention to use underscores per
-  [https://google.github.io/styleguide/cppguide.html#Variable_Names](here),
-  I am already getting bit by naming scheme...
-* avoid macros to the largest extent possible
-
 Some design principles:
+* Avoid macros as much as possible
 * Major data structures
   + field.h    -> class FieldArray    -> struct field
   + interp.h   -> class InterpArray   -> struct interp
