@@ -18,18 +18,23 @@
 // The ion moments are extrapolated forward in time to t_{n+1}.
 //
 // Inputs:
-//    none (TODO subcycling not implemented yet)
+//    isub = current subcycle number (from 0 to nsub-1)
+//    nsub = total subcycle number
 // Result:
-//    E and B fields advanced 1 step in time on live AND ghost cells.
+//    E and B fields advanced 1 substep in time on live AND ghost cells.
 // ----------------------------------------------------------------------------
-void FieldArray::advance_eb_rk4_ctrmesh() {
+void FieldArray::advance_eb_rk4_ctrmesh(int isub, int nsub) {
 
   const float r2hx = (nx > 1) ? 1/(2*hx) : 0;
   const float r2hy = (ny > 1) ? 1/(2*hy) : 0;
   const float r2hz = (nz > 1) ? 1/(2*hz) : 0;
 
-  const float dt_half  = dt/2.0;
-  const float dt_sixth = dt/6.0;
+  const float isub_ = (float) isub;
+  const float nsub_ = (float) nsub;
+
+  const float subdt       = dt/nsub_;
+  const float subdt_half  = dt/nsub_ / 2.;
+  const float subdt_sixth = dt/nsub_ / 6.;
 
   // RK4 scheme.
   // 1. Compute k1 using B_n, E_n
@@ -58,7 +63,7 @@ void FieldArray::advance_eb_rk4_ctrmesh() {
   // -------
 
   // E_n
-  advance_e_ctrmesh(0.);
+  advance_e_ctrmesh( isub_/nsub_ );
 
   for (int kk = ng; kk < (nz+ng); ++kk) {
   for (int jj = ng; jj < (ny+ng); ++jj) {
@@ -80,9 +85,9 @@ void FieldArray::advance_eb_rk4_ctrmesh() {
     fv->tmpy = k1y;
     fv->tmpz = k1z;
     // B_{n+1/2}'
-    fv->bx = fv->bx0 + dt_half * k1x;
-    fv->by = fv->by0 + dt_half * k1y;
-    fv->bz = fv->bz0 + dt_half * k1z;
+    fv->bx = fv->bx0 + subdt_half * k1x;
+    fv->by = fv->by0 + subdt_half * k1y;
+    fv->bz = fv->bz0 + subdt_half * k1z;
   }}}
 
   ghost_copy_b();
@@ -92,7 +97,7 @@ void FieldArray::advance_eb_rk4_ctrmesh() {
   // -------
 
   // E_{n+1/2}'
-  advance_e_ctrmesh(0.5);
+  advance_e_ctrmesh( (isub_+0.5)/nsub_ );
 
   for (int kk = ng; kk < (nz+ng); ++kk) {
   for (int jj = ng; jj < (ny+ng); ++jj) {
@@ -113,9 +118,9 @@ void FieldArray::advance_eb_rk4_ctrmesh() {
     fv->tmpy += 2 * k2y;
     fv->tmpz += 2 * k2z;
     // B_{n+1/2}''
-    fv->bx = fv->bx0 + dt_half * k2x;
-    fv->by = fv->by0 + dt_half * k2y;
-    fv->bz = fv->bz0 + dt_half * k2z;
+    fv->bx = fv->bx0 + subdt_half * k2x;
+    fv->by = fv->by0 + subdt_half * k2y;
+    fv->bz = fv->bz0 + subdt_half * k2z;
   }}}
 
   ghost_copy_b();
@@ -125,7 +130,7 @@ void FieldArray::advance_eb_rk4_ctrmesh() {
   // -------
 
   // E_{n+1/2}''
-  advance_e_ctrmesh(0.5);
+  advance_e_ctrmesh( (isub_+0.5)/nsub_ );
 
   for (int kk = ng; kk < (nz+ng); ++kk) {
   for (int jj = ng; jj < (ny+ng); ++jj) {
@@ -146,9 +151,9 @@ void FieldArray::advance_eb_rk4_ctrmesh() {
     fv->tmpy += 2 * k3y;
     fv->tmpz += 2 * k3z;
     // B_{n+1}'
-    fv->bx = fv->bx0 + dt * k3x;
-    fv->by = fv->by0 + dt * k3y;
-    fv->bz = fv->bz0 + dt * k3z;
+    fv->bx = fv->bx0 + subdt * k3x;
+    fv->by = fv->by0 + subdt * k3y;
+    fv->bz = fv->bz0 + subdt * k3z;
   }}}
 
   ghost_copy_b();
@@ -158,7 +163,7 @@ void FieldArray::advance_eb_rk4_ctrmesh() {
   // -------
 
   // E_{n+1}'
-  advance_e_ctrmesh(1.0);
+  advance_e_ctrmesh( (isub_+1.0)/nsub_ );
 
   for (int kk = ng; kk < (nz+ng); ++kk) {
   for (int jj = ng; jj < (ny+ng); ++jj) {
@@ -175,9 +180,9 @@ void FieldArray::advance_eb_rk4_ctrmesh() {
     float k4y = - r2hz*(fz->ex - fmz->ex) + r2hx*(fx->ez - fmx->ez);  // -(∂z Ex - ∂x Ez)
     float k4z = - r2hx*(fx->ey - fmx->ey) + r2hy*(fy->ex - fmy->ex);  // -(∂x Ey - ∂y Ex)
     // Final B_{n+1}
-    fv->bx = fv->bx0 + dt_sixth * (fv->tmpx + k4x);
-    fv->by = fv->by0 + dt_sixth * (fv->tmpy + k4y);
-    fv->bz = fv->bz0 + dt_sixth * (fv->tmpz + k4z);
+    fv->bx = fv->bx0 + subdt_sixth * (fv->tmpx + k4x);
+    fv->by = fv->by0 + subdt_sixth * (fv->tmpy + k4y);
+    fv->bz = fv->bz0 + subdt_sixth * (fv->tmpz + k4z);
   }}}
 
   ghost_copy_b();
@@ -187,7 +192,7 @@ void FieldArray::advance_eb_rk4_ctrmesh() {
   // -------
 
   // Final E_{n+1}
-  advance_e_ctrmesh(1.0);
+  advance_e_ctrmesh( (isub_+1.0)/nsub_ );
 
   return;
 }

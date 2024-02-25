@@ -56,8 +56,10 @@ int main(int argc, char* argv[]) {
   fa.hyb_eta_      = 1e-4;            // Resistivity
   fa.hyb_hypereta_ = 1e-4;            // Hyper-resistivity
 
+  int field_nsub   = 10;              // Number of field-advance subcycles
+
   fa.mesh_set_all(0.);
-  fa.mesh_set_b(1, 1, 1);
+  fa.mesh_set_b(0, 0, 1);
   fa.mesh_set_e(0, 0, 0);
 
   ions.initialize(npart);
@@ -95,7 +97,9 @@ int main(int argc, char* argv[]) {
     fa.ghost_copy_jrho();           // j advanced on live+ghost
     //fa.smooth_jrho();             // not implemented
 
-    fa.advance_eb_rk4_ctrmesh();    // E,B advanced on live+ghost
+    for (int isub=0; isub<field_nsub; ++isub) {
+      fa.advance_eb_rk4_ctrmesh(isub, field_nsub);  // E,B advanced on live+ghost
+    }
     //fa.smooth_eb();               // not implemented
 
     step++;

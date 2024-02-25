@@ -102,7 +102,7 @@ class FieldArray {
 
     // --------------------------------------------------
     // High-level methods for top-level hybrid algorithm
-    void advance_eb_rk4_ctrmesh   ();
+    void advance_eb_rk4_ctrmesh   (int isub, int nsub);
     void advance_e_ctrmesh        (float frac);
 
 };
