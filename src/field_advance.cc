@@ -344,9 +344,12 @@ void FieldArray::advance_e_ctrmesh(float frac) {
   }}}
 
   // Compute hyper-resistive term in Ohm's law
-  // TODO Ari implements curl(del^2(B)) but the equation is del^2(curl(B)),
-  // confirm that operators commute? --ATr,2024feb24
+  // NRL gives del^2(B) = -curl(curl(B)), so
+  //      + hypereta * del^2(J)
+  //    = - hypereta * curl(curl(curl(B))) * c/(4*pi)
+  //    = - hypereta * curl(del^2(B)) * c/(4*pi)
   // TODO do curl(B) stencils need another factor of two? --ATr,2024feb24
+  // Maybe yes, but factor 2 gets washed into hypereta user knob anyways
   for (int kk = ng; kk < (nz+ng); ++kk) {
   for (int jj = ng; jj < (ny+ng); ++jj) {
   for (int ii = ng; ii < (nx+ng); ++ii) {
