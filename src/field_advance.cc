@@ -4,6 +4,13 @@
 
 #include "field.h"
 
+// Convenience wrapper around the subcycle loop
+void FieldArray::advance_eb_rk4_ctrmesh() {
+  for (int isub=0; isub<nsubcycle_; ++isub) {
+    advance_eb_rk4_ctrmesh(isub, nsubcycle_);
+  }
+}
+
 // ----------------------------------------------------------------------------
 // advance_eb_rk4_ctrmesh() advances both E/B fields in time using a
 // 4th-order Runge Kutta (RK4) algorithm, assuming all fields and ion moments

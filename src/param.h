@@ -9,6 +9,8 @@ typedef struct param {
   int ilast;
   int seed;
 
+  float dt;
+
   float Lx;
   float Ly;
   float Lz;

@@ -4,6 +4,7 @@
 #include "hdf5.h"
 
 #include "field.h"
+#include "interp.h"
 #include "random.h"
 
 typedef struct particle {

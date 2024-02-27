@@ -38,6 +38,9 @@ class FieldArray {
     float hz;
     float dt;  // simulation timestep
 
+    // how many subcycles per simulation timestep
+    int nsubcycle_;
+
     // Hybrid algorithm parameters
     float hyb_te_ref_;
     float hyb_ne_ref_;
@@ -105,6 +108,7 @@ class FieldArray {
 
     // --------------------------------------------------
     // High-level methods for top-level hybrid algorithm
+    void advance_eb_rk4_ctrmesh   ();
     void advance_eb_rk4_ctrmesh   (int isub, int nsub);
     void advance_e_ctrmesh        (float frac);
 

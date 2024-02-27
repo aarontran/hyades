@@ -30,9 +30,18 @@ You will need a C++ compiler with HDF5 and OpenMP libraries.
 Both can be disabled if you don't want/need them, but you'll have to tinker
 with the source code.
 
-To run a simulation, edit the Makefile and do:
+To set up a simulation, you will need a "user input" file.  An example such
+file is:
+
+    input/pcai.cc
+
+To build a simulation executable, edit the Makefile to point to your user input
+file, choose your compiler flags, and do:
 
     make -j
+
+To run a simulation, do:
+
     ./hyades
 
 Some parts of the code are multi-threaded using OpenMP.  You can tune the

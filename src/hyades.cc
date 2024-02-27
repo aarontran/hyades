@@ -4,8 +4,6 @@
 #include <sys/resource.h>  // for getrusage
 #include <omp.h>
 
-#include <cmath>  // for sqrt
-
 #include <filesystem>
 
 #include "field.h"
@@ -14,6 +12,7 @@
 #include "particle.h"
 #include "random.h"
 #include "timer.h"
+#include "user.h"
 
 int main(int argc, char* argv[]) {
 
@@ -23,69 +22,17 @@ int main(int argc, char* argv[]) {
   // User initialize
   // --------------------------------------------------------------------------
 
-  // Test problem: 1D domain with anisotropic protons to drive cyclotron waves
-  // matched to Hybrid-VPIC deck "examples/pcai"
+  param_t par;
+  user_param(&par);
 
-  // WARNING: >=2 ghost cells are required for
-  // * particle move+deposit scheme to not deal with boundary crossings
-  // * Ohm's law Laplacian
-
-  param_t        par;
-  par.idumpf =  50;     // fields dump interval, 0.5 Omci^-1
-  par.idumpp =2000;     // particles dump interval, 20 Omci^-1
-  //par.isort = 20;
-  par.ilast = 6000;     // run duration 60 Omci^-1
-  par.Lx = (10.5/64.);  // use cubical cells
-  par.Ly = (10.5/64.);
-  par.Lz = 10.5;
-  par.nx = 1;     // TODO illegal to have nx,ny=1 with nghost=2,
-  par.ny = 1;     // I guess the ghost just keep stacking and get the "other" ghosts so it works
-                  //but not a good idea, should guard against this...
-                  //ALSO current deposit may be broken! -ATr,2024feb25
-  par.nz = 64;
-  par.ng =  2;    // number of ghost cells
-  par.seed = 1;   // zero-th particle gets teleported so useful test case
-
-  par.stridep = 100;  // particle output stride
-  //par.stridef = 100;  // fields output stride  // not implemented
-
-  par.nppc  = 10000;
-  par.npmax = 1000000;
-
-  Random         rng = Random(par.seed);
-  FieldArray      fa = FieldArray(par.nx, par.ny, par.nz, par.ng,  // nx,ny,nz,ng
-                                  par.Lx/par.nx,  // hx
-                                  par.Ly/par.ny,  // hy
-                                  par.Lz/par.nz,  // hz
-                                  0.01);  // dt
+  FieldArray      fa = FieldArray(par.nx, par.ny, par.nz, par.ng,
+                                  par.Lx/par.nx, par.Ly/par.ny, par.Lz/par.nz,
+                                  par.dt);
   InterpArray     ia = InterpArray(fa);
+  Random         rng = Random(par.seed);
   ParticleArray ions = ParticleArray(1, 1, par.npmax, fa, ia, rng);
 
-  double vthi = 0.707;  // sqrt(kB*Ti/mi) = sqrt(beta,i/2)
-  double TiTe = 1;
-  double Tianiso = 3;  // perp/parallel temperature ratio
-  int npart = par.nppc*(par.nx*par.ny*par.nz);
-
-  // Hybrid algorithm parameters
-  fa.hyb_te_ref_   = vthi*vthi/TiTe;  // Electron temperature kB*Te/(mi*vA0^2) scaled to ION mass
-  fa.hyb_ne_ref_   = 1.;              // Electron density ref value for EoS
-  fa.hyb_ne_floor_ = 0.05;            // Electron density floor
-  fa.hyb_eta_      = 0;//1e-4;        // Resistivity
-  fa.hyb_hypereta_ = 0;//1e-4;        // Hyper-resistivity
-
-  int field_nsub   = 1;               // Number of field-advance subcycles
-
-  fa.mesh_set_all(0.);
-  fa.mesh_set_b(0, 0, 1.);
-
-  // Charge per macro ion
-  double weight = par.Lx*par.Ly*par.Lz/(par.nppc*par.nx*par.ny*par.nz);
-
-  ions.initialize(npart, weight);
-  ions.maxwellian1d(0, npart, "ux", vthi*sqrt(Tianiso), 0);
-  ions.maxwellian1d(0, npart, "uy", vthi*sqrt(Tianiso), 0);
-  ions.maxwellian1d(0, npart, "uz", vthi,               0);
-  ions.uniform(0, npart, 0., par.Lx, 0., par.Ly, 0., par.Lz);
+  user_initialize(&fa, &ions, &par);
 
   // --------------------------------------------------------------------------
   // Initialize
@@ -215,9 +162,7 @@ int main(int argc, char* argv[]) {
     clock.toc("depgh");
 
     clock.tic("field");
-    for (int isub=0; isub<field_nsub; ++isub) {
-      fa.advance_eb_rk4_ctrmesh(isub, field_nsub);  // E,B advanced on live+ghost
-    }
+    fa.advance_eb_rk4_ctrmesh();    // E,B advanced on live+ghost
     //fa.smooth_eb();               // not implemented
     clock.toc("field");
 
