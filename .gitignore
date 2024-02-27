@@ -5,6 +5,10 @@ output
 # Hyades default executable
 hyades
 
+# Hyades post-processing analysis dumps
+analysis/media
+analysis/media-frames
+
 # -------------------------------------------
 # Exclusions from github.com/github/gitignore
 # -------------------------------------------
