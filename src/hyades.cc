@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdlib.h>  // for malloc, free
 #include <stdio.h>  // for printf
+#include <sys/resource.h>  // for getrusage
 #include <omp.h>
 
 #include <cmath>  // for sqrt
@@ -160,6 +161,16 @@ int main(int argc, char* argv[]) {
 
   clock.toc("init");
   printf("Initialized in %g seconds.\n", clock.flush("init"));
+  {
+    struct rusage result;
+    getrusage(RUSAGE_SELF, &result);
+    // Mac OS X maxrss in bytes, Linux in kilobytes; see "man getrusage".
+#if defined(__APPLE__) && defined(__MACH__)
+    printf("Memory (maxRSS) %ld MB\n", result.ru_maxrss/1000/1000);
+#else
+    printf("Memory (maxRSS) %ld MB\n", result.ru_maxrss/1000);
+#endif
+  }
   printf("Evolving simulation.\n");
 
   // --------------------------------------------------------------------------
