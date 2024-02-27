@@ -39,7 +39,7 @@ FLAGS= -Wall -fopenmp -g -O0 -std=c++17
 %.o: src/%.cc Makefile
 	$(CC) $(INCL) $(FLAGS) -c $<
 
-hyades: field.o field_advance.o field_constructor.o field_dump.o hyades.o interp.o particle.o particle_move.o particle_dump.o random.o
+hyades: field.o field_advance.o field_constructor.o field_dump.o hyades.o interp.o particle.o particle_move.o particle_dump.o random.o timer.o
 	$(CC) $(INCL) $(LIBS) $(FLAGS) -o hyades $^
 
 all: hyades

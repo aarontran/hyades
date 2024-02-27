@@ -12,25 +12,15 @@
 #include "param.h"
 #include "particle.h"
 #include "random.h"
-
-// TODO taken from VPIC src/util/profile/profile.c move to own module
-// TODO use more modern timer functions --ATr,2024feb25
-// https://people.cs.rutgers.edu/~pxk/416/notes/c-tutorials/gettime.html
-#include <sys/time.h>
-double wallclock(void) {
-  //https://stackoverflow.com/questions/5362577/c-gettimeofday-for-computing-time
-  //https://people.cs.rutgers.edu/~pxk/416/notes/c-tutorials/gettime.html
-  struct timeval tv[1];
-  gettimeofday( tv, NULL );
-  return (double)(tv->tv_sec) + 1e-6*(double)(tv->tv_usec);
-}
+#include "timer.h"
 
 int main(int argc, char* argv[]) {
 
   printf("Max number of threads %d\n", omp_get_max_threads());
 
   // --------------------------------------------------------------------------
-  // Initialization
+  // User initialize
+  // --------------------------------------------------------------------------
 
   // Test problem: 1D domain with anisotropic protons to drive cyclotron waves
   // matched to Hybrid-VPIC deck "examples/pcai"
@@ -96,6 +86,26 @@ int main(int argc, char* argv[]) {
   ions.maxwellian1d(0, npart, "uz", vthi,               0);
   ions.uniform(0, npart, 0., par.Lx, 0., par.Ly, 0., par.Lz);
 
+  // --------------------------------------------------------------------------
+  // Initialize
+  // --------------------------------------------------------------------------
+
+  TimerArray clock = TimerArray(100);
+  clock.add("total");  // total and init are large blocks
+  clock.add("init");
+  clock.add("evolve");  // close timing of evolution loop
+  clock.add("clearj");
+  clock.add("interp");
+  clock.add("move");
+  clock.add("dep");
+  clock.add("bdry");
+  clock.add("depgh");
+  clock.add("field");
+
+  clock.tic("total");
+  clock.tic("init");
+  //clock.add("finalize");  // not implemented
+
   // At simulation start, the user provides:
   //     particle r at t=0
   //     particle v at t=0
@@ -148,42 +158,59 @@ int main(int argc, char* argv[]) {
     ions.dump(0, "output/prtl.%d.hdf5", par.stridep);
   }
 
-  {
-    //field_t* fv = fa.voxel(2,2,2); // Useful to check deposit at ghosts
-    field_t* fv = fa.voxel(2,2,2);
-    printf("init field bx %f by %f bz %f\n", fv->bx, fv->by, fv->bz);
-    printf("init field ex %f ey %f ez %f\n", fv->ex, fv->ey, fv->ez);
-    printf("init field jfx %f jfy %f jfz %f rhof %f\n", fv->jfx, fv->jfy, fv->jfz, fv->rhof);
-  }
+  clock.toc("init");
+  printf("Initialized in %g seconds.\n", clock.flush("init"));
+  printf("Evolving simulation.\n");
 
   // --------------------------------------------------------------------------
-  // Evolution
-
-  double started = wallclock();  // TODO TEMPORARY -ATr,2024feb25
+  // Evolve
+  // --------------------------------------------------------------------------
 
   int step = 0;
 
   while (step < par.ilast) {
 
+    clock.tic("evolve");
+
     //if (step % par.isort == 0) ions.sort();  // not implemented
 
     // prepare for particle advance
-    fa.mesh_set_jrho0();              // copy old j/rho into j0/rho0
-    fa.mesh_set_jrho(0., 0., 0., 0.);
-    fa.ghost_copy_eb();             // update E/B in ghosts
+    clock.tic("clearj");
+    fa.mesh_set_jrho0();            // copy old j/rho into j0/rho0
+    fa.mesh_set_jrho(0,0,0,0);
+    clock.toc("clearj");
+
+    clock.tic("interp");
+    //fa.ghost_copy_eb();           // update E/B in ghosts -- already done in field advance
     ia.update();                    // compute E/B field interpolation coeffs
+    clock.toc("interp");
 
+    clock.tic("move");
     ions.move();                    // r,v advanced on ghosts
-    ions.deposit(1);                // j   advanced on ghosts
-    ions.boundary_teleport();       // r,v advanced
-    fa.ghost_deposit_jrho();
-    fa.ghost_copy_jrho();           // j advanced
-    //fa.smooth_jrho();             // not implemented
+    clock.toc("move");
 
+    clock.tic("dep");
+    ions.deposit(1);                // j   advanced on ghosts
+    clock.toc("dep");
+
+    clock.tic("bdry");
+    ions.boundary_teleport();       // r,v advanced
+    clock.toc("bdry");
+
+    clock.tic("depgh");
+    fa.ghost_deposit_jrho();
+    fa.ghost_copy_jrho();           // j   advanced
+    //fa.smooth_jrho();             // not implemented
+    clock.toc("depgh");
+
+    clock.tic("field");
     for (int isub=0; isub<field_nsub; ++isub) {
       fa.advance_eb_rk4_ctrmesh(isub, field_nsub);  // E,B advanced on live+ghost
     }
     //fa.smooth_eb();               // not implemented
+    clock.toc("field");
+
+    clock.toc("evolve");
 
     step++;
 
@@ -194,8 +221,16 @@ int main(int argc, char* argv[]) {
       ions.dump(step, "output/prtls.%d.hdf5", par.stridep);
     }
 
-    if (step % 100 == 0) {
-      printf("step %d elapsed %f\n", step, wallclock()-started);
+    if (step % 10 == 0) {
+      printf("Step %d of %d elapsed %g seconds.\n", step, par.ilast, clock.read("total"));
+      printf("    clearj %.2e\n", clock.flush("clearj"));
+      printf("    interp %.2e\n", clock.flush("interp"));
+      printf("      move %.2e\n", clock.flush("move"));
+      printf("       dep %.2e\n", clock.flush("dep"));
+      printf("      bdry %.2e\n", clock.flush("bdry"));
+      printf("     depgh %.2e\n", clock.flush("depgh"));
+      printf("     field %.2e\n", clock.flush("field"));
+      printf("     total %.2e\n", clock.flush("evolve"));
     }
 
   }
@@ -208,22 +243,31 @@ int main(int argc, char* argv[]) {
 
   // --------------------------------------------------------------------------
   // Finalize
-
-  {
-    //printf("final interp array dbxdx %f\n", ia.voxel(3,3,3)->dbxdx);
-    //field_t* fv = fa.voxel(2,2,2); // Useful to check deposit at ghosts
-    field_t* fv = fa.voxel(2,2,2);
-    printf("\n");
-    printf("final field bx %f by %f bz %f\n", fv->bx, fv->by, fv->bz);
-    printf("final field ex %f ey %f ez %f\n", fv->ex, fv->ey, fv->ez);
-    printf("final field jfx %f jfy %f jfz %f rhof %f\n", fv->jfx, fv->jfy, fv->jfz, fv->rhof);
-  }
+  // --------------------------------------------------------------------------
 
   free(ions.p0);
   free(ia.ic0);
   free(fa.f0);
   free(fa.ivoxels_ghost);
   free(fa.ivoxels_ghsrc);
+
+  clock.toc("total");
+
+  // in case we didn't end on a step with timer printout
+  clock.flush_all();
+
+  printf("All done in %g seconds.\n", clock.read_total("total"));
+  printf("Initializing took %g seconds.\n", clock.read_total("init"));
+  printf("Evolving took %g seconds.\n", clock.read_total("evolve"));
+  printf("    clearj %.2e\n", clock.read_total("clearj"));
+  printf("    interp %.2e\n", clock.read_total("interp"));
+  printf("      move %.2e\n", clock.read_total("move"));
+  printf("       dep %.2e\n", clock.read_total("dep"));
+  printf("      bdry %.2e\n", clock.read_total("bdry"));
+  printf("     depgh %.2e\n", clock.read_total("depgh"));
+  printf("     field %.2e\n", clock.read_total("field"));
+
+  free(clock.t0);
 
   return 0;
 }
