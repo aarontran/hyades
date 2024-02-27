@@ -1,6 +1,9 @@
 #include <stdlib.h> // need stdlib or cstdint to get int32_t at compile time???,
                     // don't understand why --ATr,2024feb09
 #include <stdio.h>
+
+#include <omp.h>
+
 #include "field.h"
 #include "interp.h"
 #include "particle.h"
@@ -25,6 +28,7 @@ void ParticleArray::move() {
   // Note: some arithmetic ops are NOT optimized; beware compiler re-ordering
   // of math b/c you may lose precision.
 
+#pragma omp parallel for
   for (int ip=0; ip<np; ++ip) {
 
     particle_t* p = &(p0[ip]);
@@ -371,6 +375,7 @@ void ParticleArray::boundary_teleport() {
   const float z0 =    ng-0.5;
   const float z1 = nz+ng-0.5;
 
+#pragma omp parallel for
   for (int ip=0; ip<np; ++ip) {
     particle_t* p = &(p0[ip]);
     if (p->x <  x0) { p->x += nx; };
