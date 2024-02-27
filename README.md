@@ -5,10 +5,12 @@ Hyades is a hybrid plasma simulation code (kinetic ions, fluid electrons).
 It's a simpler, stripped-down fork of the
 [Hybrid-VPIC](https://github.com/lanl/vpic-kokkos/tree/hybridVPIC)
 simulation code developed by
-[Le et al. (2023)](https://doi.org/10.1063/5.0146529),
+[Le et al.&nbsp;(2023)](https://doi.org/10.1063/5.0146529),
 which uses an explicit time-stepping algorithm similar to the H3D code
-([Karimabadi et al., 2014;](https://doi.org/10.1063/1.4882875)
- [Le et al., 2016](https://doi.org/10.1063/1.4943893)).
+([Karimabadi et al.&nbsp;2014;](https://doi.org/10.1063/1.4882875)
+ [Le et al.&nbsp;2016](https://doi.org/10.1063/1.4943893))
+all built within the VPIC code framework
+([Bowers et al.&nbsp;2008](https://doi.org/10.1063/1.2840133)).
 
 __Hyades is under construction and may have bugs.  It has been tested and shown
 to work on one case (1D proton cyclotron anisotropy instability problem).__
