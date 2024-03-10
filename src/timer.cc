@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdlib.h>  // for malloc, free
 #include <string.h>
 #include <sys/time.h>
 
@@ -10,11 +11,11 @@ TimerArray::TimerArray(int ntmax_
   ntmax(ntmax_)
 {
   nt = 0;
-  t0 = (timer_t*) malloc( ntmax_*sizeof(timer_t) );
+  t0 = (timekeep_t*) malloc( ntmax_*sizeof(timekeep_t) );
 }
 
-timer_t* TimerArray::seek(const char* name) {
-  timer_t* watch = t0;
+timekeep_t* TimerArray::seek(const char* name) {
+  timekeep_t* watch = t0;
   int ii = 0;
   while (ii < nt) {
     if (strcmp(name, watch->name) == 0) break;
@@ -27,7 +28,7 @@ timer_t* TimerArray::seek(const char* name) {
 
 void TimerArray::add(const char* name) {
   assert(nt < ntmax);
-  timer_t* watch = &(t0[nt]);
+  timekeep_t* watch = &(t0[nt]);
   watch->t    = -1;  // IMPORTANT sentinel value, < 0 means not ticking.
   watch->tbuf = 0;
   watch->ttot = 0;
@@ -37,14 +38,14 @@ void TimerArray::add(const char* name) {
 
 // cannot already be ticking (don't tic + tic without intervening toc)
 void TimerArray::tic(const char* name) {
-  timer_t* watch = seek(name);
+  timekeep_t* watch = seek(name);
   assert(watch->t < 0);
   watch->t = wallclock();
 }
 
 // "toc" must be preceded by "tic"
 void TimerArray::toc(const char* name) {
-  timer_t* watch = seek(name);
+  timekeep_t* watch = seek(name);
   assert(watch->t > 0);
   watch->tbuf += (wallclock() - watch->t);
   watch->t = -1;  // reset for next "tic"
@@ -52,14 +53,14 @@ void TimerArray::toc(const char* name) {
 
 // "read" must be preceded by "tic"
 double TimerArray::read(const char* name) {
-  timer_t* watch = seek(name);
+  timekeep_t* watch = seek(name);
   assert(watch->t > 0);
   return wallclock() - watch->t;
 }
 
 // must come after "toc" and "flush"
 double TimerArray::read_total(const char* name) {
-  timer_t* watch = seek(name);
+  timekeep_t* watch = seek(name);
   assert(watch->t < 0);  // cannot be ticking
   assert(watch->tbuf == 0);  // must be flushed
   return watch->ttot;
@@ -68,7 +69,7 @@ double TimerArray::read_total(const char* name) {
 // "flush" must be preceded by "toc" to guard against mis-use
 // OK to call this twice in a row (second flush is a no-op)
 double TimerArray::flush(const char* name) {
-  timer_t* watch = seek(name);
+  timekeep_t* watch = seek(name);
   assert(watch->t < 0);
   double result = watch->tbuf;
   watch->tbuf = 0;
@@ -79,7 +80,7 @@ double TimerArray::flush(const char* name) {
 // "flush" must be preceded by "toc" to guard against mis-use
 // OK to call this twice in a row (second flush is a no-op)
 void TimerArray::flush_all() {
-  timer_t* watch = t0;
+  timekeep_t* watch = t0;
   int ii = 0;
   while (ii < nt) {
     assert(watch->t < 0);

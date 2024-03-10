@@ -214,7 +214,7 @@ int main(int argc, char* argv[]) {
 
   printf("All done in %g seconds.\n", clock.read_total("total"));
   printf("Initializing took %g seconds.\n", clock.read_total("init"));
-  printf("Evolving took %g seconds.\n", clock.read_total("evolve"));
+  printf("Evolution summary.\n");
   printf("    clearj %.2e\n", clock.read_total("clearj"));
   printf("    interp %.2e\n", clock.read_total("interp"));
   printf("      move %.2e\n", clock.read_total("move"));
@@ -222,6 +222,7 @@ int main(int argc, char* argv[]) {
   printf("      bdry %.2e\n", clock.read_total("bdry"));
   printf("     depgh %.2e\n", clock.read_total("depgh"));
   printf("     field %.2e\n", clock.read_total("field"));
+  printf("     total %.2e\n", clock.read_total("evolve"));
 
   free(clock.t0);
 

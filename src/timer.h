@@ -1,15 +1,16 @@
 #ifndef TIMER_H
 #define TIMER_H
 
-typedef struct timer {
+typedef struct timekeep {
   double t;
   double tbuf;
   double ttot;
   //double ttotal;  // not implemented
   //int ncalls;
   char name[100];  // see also TimerArray member "max_name_len"
-} timer_t;
+} timekeep_t;
 
+// Name "timer_t" is already used in C standard library
 
 class TimerArray {
 
@@ -21,13 +22,13 @@ class TimerArray {
 
     int ntmax;   // max number of timers
     int nt;      // current number of timers
-    timer_t* t0;
+    timekeep_t* t0;
 
     // Data
 
     // Low-level subroutines
     double wallclock();
-    timer_t* seek(const char* name);
+    timekeep_t* seek(const char* name);
 
     // High-level subroutines
     void add(const char* name);
