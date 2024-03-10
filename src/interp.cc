@@ -17,6 +17,7 @@ interp_t* InterpArray::voxel(int ii, int jj, int kk) {
   return &ic0[ fa.ivoxel(ii,jj,kk) ];
 }
 
+#ifdef SHAPE_QS
 // Update the interpolation coefficients from field quantities
 void InterpArray::update() {
 
@@ -145,9 +146,50 @@ void InterpArray::update() {
     } // end for jj
   } // end for kk
 } // end InterpArray::update()
+#else
+#ifdef SHAPE_NGP
+// Update the interpolation coefficients from field quantities
+void InterpArray::update() {
+  // Loop over non-ghost cells only
+  for (int kk=fa.ng; kk < (fa.nz+fa.ng); ++kk) {
+    for (int jj=fa.ng; jj < (fa.ny+fa.ng); ++jj) {
+      for (int ii=fa.ng; ii < (fa.nx+fa.ng); ++ii) {
+
+        interp_t* ic = voxel(ii, jj, kk);
+
+        field_t* pf0  = fa.voxel(ii, jj, kk);
+
+        // Electric field interpolation, NGP
+        ic->ex     = pf0->ex;
+        ic->ey     = pf0->ey;
+        ic->ez     = pf0->ez;
+        // Magnetic field interpolation, NGP
+        ic->bx     = pf0->bx;
+        ic->by     = pf0->by;
+        ic->bz     = pf0->bz;
+
+      } // end for ii
+    } // end for jj
+  } // end for kk
+} // end InterpArray::update()
+#else
+#if defined SHAPE_CIC || defined SHAPE_TSC
+
+// No-op, fields are accessed directly in the particle mover
+void InterpArray::update() {
+  return;
+}
+
+// endifdef SHAPE_CIC || defined SHAPE_TSC
+#endif
+// endifdef SHAPE_NGP
+#endif
+// endifdef SHAPE_QS
+#endif
 
 // Interpolate field(s) to (x,y,z) location given by voxel + offsets.
 // Voxel offsets dx,dy,dz are within interval [-1,1].
+#ifdef SHAPE_QS
 float InterpArray::exloc(interp_t* ic, float dx, float dy, float dz) {
     return ( ic->ex + dx*( ic->dexdx + dx*ic->d2exdx )
                     + dy*( ic->dexdy + dy*ic->d2exdy )
@@ -178,3 +220,40 @@ float InterpArray::bzloc(interp_t* ic, float dx, float dy, float dz) {
                     + dy*( ic->dbzdy + dy*ic->d2bzdy )
                     + dz*( ic->dbzdz + dz*ic->d2bzdz ) );
 }
+#else
+#ifdef SHAPE_NGP
+float InterpArray::exloc(interp_t* ic, float dx, float dy, float dz) {
+    return ic->ex;
+}
+float InterpArray::eyloc(interp_t* ic, float dx, float dy, float dz) {
+    return ic->ey;
+}
+float InterpArray::ezloc(interp_t* ic, float dx, float dy, float dz) {
+    return ic->ez;
+}
+float InterpArray::bxloc(interp_t* ic, float dx, float dy, float dz) {
+    return ic->bx;
+}
+float InterpArray::byloc(interp_t* ic, float dx, float dy, float dz) {
+    return ic->by;
+}
+float InterpArray::bzloc(interp_t* ic, float dx, float dy, float dz) {
+    return ic->bz;
+}
+#else
+#if defined SHAPE_CIC || defined SHAPE_TSC
+
+// No-op, fields are accessed directly in the particle mover
+float InterpArray::exloc(interp_t* ic, float dx, float dy, float dz) { return 0; }
+float InterpArray::eyloc(interp_t* ic, float dx, float dy, float dz) { return 0; }
+float InterpArray::ezloc(interp_t* ic, float dx, float dy, float dz) { return 0; }
+float InterpArray::bxloc(interp_t* ic, float dx, float dy, float dz) { return 0; }
+float InterpArray::byloc(interp_t* ic, float dx, float dy, float dz) { return 0; }
+float InterpArray::bzloc(interp_t* ic, float dx, float dy, float dz) { return 0; }
+
+// endifdef SHAPE_CIC || defined SHAPE_TSC
+#endif
+// endifdef SHAPE_NGP
+#endif
+// endifdef SHAPE_QS
+#endif

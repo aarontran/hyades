@@ -9,6 +9,8 @@
 // Low-level methods
 
 // Access fields using 3D integer tuple of grid mesh indices, 0-indexed
+// TODO seems I cannot use "inline" or "constexpr", so this method probably
+// needs to be pulled out... -ATr,2024feb27
 int FieldArray::ivoxel(int ii, int jj, int kk) {
   return ii + (nx+2*ng)*(jj + (ny+2*ng)*kk);
 }

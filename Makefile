@@ -1,4 +1,12 @@
-USER=input/pcai.cc
+#USER=input/pcai.cc
+USER=input/column-nz32.cc
+
+# use to select particle shape
+# terrible hack need to change
+#FLAGS_USER=-DSHAPE_NGP
+FLAGS_USER=-DSHAPE_QS
+#FLAGS_USER=-DSHAPE_CIC
+#FLAGS_USER=-DSHAPE_TSC
 
 # Personal Macbook
 #CC= DYLD_LIBRARY_PATH=/Users/atran/opt/miniconda3/envs/wham/lib clang++
@@ -7,9 +15,9 @@ INCL= -I/Users/atran/opt/miniconda3/envs/wham/include
 LIBS= -L/Users/atran/opt/miniconda3/envs/wham/lib
 #INCL=
 #LIBS=
-FLAGS= -Wall -fopenmp -g -O0 -std=c++17
+#FLAGS= -Wall -fopenmp -g -O0 -std=c++17
 #FLAGS= -lgomp -fopenmp
-#FLAGS= -fopenmp -Ofast -mcpu=native -mtune=native -std=c++17
+FLAGS= -fopenmp -Ofast -mcpu=native -mtune=native -std=c++17
 #-fno-strict-aliasing  # this degrades performance by 20% ??
 # need std c++17 to get std::filesystem library
 
@@ -39,13 +47,13 @@ FLAGS= -Wall -fopenmp -g -O0 -std=c++17
 # $^ = names of all the prerequisites, with spaces between them
 
 hyades: field.o field_advance.o field_constructor.o field_dump.o hyades.o interp.o particle.o particle_move.o particle_dump.o random.o timer.o $(addsuffix .o, $(basename $(notdir $(USER))))
-	$(CC) $(INCL) $(LIBS) $(FLAGS) -o hyades $^
+	$(CC) $(INCL) $(LIBS) $(FLAGS) $(FLAGS_USER) -o hyades $^
 
 %.o: src/%.cc Makefile
-	$(CC) $(INCL) $(FLAGS) -c $<
+	$(CC) $(INCL) $(FLAGS) $(FLAGS_USER) -c $<
 
 $(addsuffix .o, $(basename $(notdir $(USER)))): $(USER) Makefile
-	$(CC) $(INCL) $(FLAGS) -c $<
+	$(CC) $(INCL) $(FLAGS) $(FLAGS_USER) -c $<
 
 all: hyades
 

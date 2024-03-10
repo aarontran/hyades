@@ -177,7 +177,7 @@ int main(int argc, char* argv[]) {
       ions.dump(step, "output/prtls.%d.hdf5", par.stridep);
     }
 
-    if (step % 10 == 0) {
+    if (step % 100 == 0) {
       printf("Step %d of %d elapsed %g seconds.\n", step, par.ilast, clock.read("total"));
       printf("    clearj %.2e\n", clock.flush("clearj"));
       printf("    interp %.2e\n", clock.flush("interp"));

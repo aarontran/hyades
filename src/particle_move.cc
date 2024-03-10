@@ -25,6 +25,24 @@ void ParticleArray::move() {
   const float cdt_dy  = fa.dt/fa.hy;
   const float cdt_dz  = fa.dt/fa.hz;
 
+  // TODO HACKY HACK HACK!!!!!
+#ifdef SHAPE_CIC
+  const float fnx = fa.nx;
+  const float fny = fa.ny;
+  const float fnz = fa.nz;
+  const float fng = fa.ng;
+  // Linear array increments
+  const int ox = 1;
+  const int oy = (fnx+2*fng);
+  const int oz = (fnx+2*fng) * (fny+2*fng);
+#endif
+  // TODO HACKY HACK HACK!!!!!
+#ifdef SHAPE_TSC
+  const float one_eighth = 1./8.;
+  const float one_fourth = 1./4.;
+  const float three = 3.;
+#endif
+
   // Note: some arithmetic ops are NOT optimized; beware compiler re-ordering
   // of math b/c you may lose precision.
 
@@ -33,6 +51,7 @@ void ParticleArray::move() {
 
     particle_t* p = &(p0[ip]);
 
+#if defined SHAPE_NGP || SHAPE_QS
     // Voxel indices
     int ix = (int)(p->x + one_half);  // particles use cell-centered coordinates
     int iy = (int)(p->y + one_half);
@@ -50,6 +69,244 @@ void ParticleArray::move() {
     float cbx  = ia.bxloc(ic, dx, dy, dz);
     float cby  = ia.byloc(ic, dx, dy, dz);
     float cbz  = ia.bzloc(ic, dx, dy, dz);
+#else
+#ifdef SHAPE_CIC
+    // This is a very hacky implementation, we can do use interpolator too but
+    // it would require big data structure change.
+
+    // Voxel indices nearest (below/left) of streak midpoint
+    int ix = (int)(p->x);  // particles use cell-centered coordinates
+    int iy = (int)(p->y);
+    int iz = (int)(p->z);
+    // "Lower/left" voxel offsets on interval [0,1]
+    // unlike other parts of VPIC code
+    float dx = p->x - ix;
+    float dy = p->y - iy;
+    float dz = p->z - iz;
+
+    ///////////////////
+    // First attempt
+
+    // CIC = area weighting = trilinear interpolation
+//    field_t* f0   = fa.voxel( ix  , iy  , iz   );
+//    field_t* fz   = fa.voxel( ix  , iy  , iz+1 );
+//    field_t* fy   = fa.voxel( ix  , iy+1, iz   );
+//    field_t* fyz  = fa.voxel( ix  , iy+1, iz+1 );
+//    field_t* fx   = fa.voxel( ix+1, iy  , iz   );
+//    field_t* fxz  = fa.voxel( ix+1, iy  , iz+1 );
+//    field_t* fxy  = fa.voxel( ix+1, iy+1, iz   );
+//    field_t* fxyz = fa.voxel( ix+1, iy+1, iz+1 );
+//
+//    float hax = qdt_2mc * (
+//        (1.-dx)*(1.-dy)*(1.-dz) *   f0->ex
+//      + (1.-dx)*(1.-dy)*    dz  *   fz->ex
+//      + (1.-dx)*    dy *(1.-dz) *   fy->ex
+//      + (1.-dx)*    dy *    dz  *  fyz->ex
+//      +     dx *(1.-dy)*(1.-dz) *   fx->ex
+//      +     dx *(1.-dy)*    dz  *  fxz->ex
+//      +     dx *    dy *(1.-dz) *  fxy->ex
+//      +     dx *    dy *    dz  * fxyz->ex
+//    );
+//    float hay = qdt_2mc * (
+//        (1.-dx)*(1.-dy)*(1.-dz) *   f0->ey
+//      + (1.-dx)*(1.-dy)*    dz  *   fz->ey
+//      + (1.-dx)*    dy *(1.-dz) *   fy->ey
+//      + (1.-dx)*    dy *    dz  *  fyz->ey
+//      +     dx *(1.-dy)*(1.-dz) *   fx->ey
+//      +     dx *(1.-dy)*    dz  *  fxz->ey
+//      +     dx *    dy *(1.-dz) *  fxy->ey
+//      +     dx *    dy *    dz  * fxyz->ey
+//    );
+//    float haz = qdt_2mc * (
+//        (1.-dx)*(1.-dy)*(1.-dz) *   f0->ez
+//      + (1.-dx)*(1.-dy)*    dz  *   fz->ez
+//      + (1.-dx)*    dy *(1.-dz) *   fy->ez
+//      + (1.-dx)*    dy *    dz  *  fyz->ez
+//      +     dx *(1.-dy)*(1.-dz) *   fx->ez
+//      +     dx *(1.-dy)*    dz  *  fxz->ez
+//      +     dx *    dy *(1.-dz) *  fxy->ez
+//      +     dx *    dy *    dz  * fxyz->ez
+//    );
+//
+//    float cbx = (
+//        (1.-dx)*(1.-dy)*(1.-dz) *   f0->bx
+//      + (1.-dx)*(1.-dy)*    dz  *   fz->bx
+//      + (1.-dx)*    dy *(1.-dz) *   fy->bx
+//      + (1.-dx)*    dy *    dz  *  fyz->bx
+//      +     dx *(1.-dy)*(1.-dz) *   fx->bx
+//      +     dx *(1.-dy)*    dz  *  fxz->bx
+//      +     dx *    dy *(1.-dz) *  fxy->bx
+//      +     dx *    dy *    dz  * fxyz->bx
+//    );
+//    float cby = (
+//        (1.-dx)*(1.-dy)*(1.-dz) *   f0->by
+//      + (1.-dx)*(1.-dy)*    dz  *   fz->by
+//      + (1.-dx)*    dy *(1.-dz) *   fy->by
+//      + (1.-dx)*    dy *    dz  *  fyz->by
+//      +     dx *(1.-dy)*(1.-dz) *   fx->by
+//      +     dx *(1.-dy)*    dz  *  fxz->by
+//      +     dx *    dy *(1.-dz) *  fxy->by
+//      +     dx *    dy *    dz  * fxyz->by
+//    );
+//    float cbz = (
+//        (1.-dx)*(1.-dy)*(1.-dz) *   f0->bz
+//      + (1.-dx)*(1.-dy)*    dz  *   fz->bz
+//      + (1.-dx)*    dy *(1.-dz) *   fy->bz
+//      + (1.-dx)*    dy *    dz  *  fyz->bz
+//      +     dx *(1.-dy)*(1.-dz) *   fx->bz
+//      +     dx *(1.-dy)*    dz  *  fxz->bz
+//      +     dx *    dy *(1.-dz) *  fxy->bz
+//      +     dx *    dy *    dz  * fxyz->bz
+//    );
+
+    ///////////////////
+    // Second attempt with more direct array access
+    // and refactored index calculation
+    // TENTATIVE RESULT: doesn't seem to matter more than few percent level...
+    int il = ix + (fnx+2*fng)*(iy + (fny+2*fng)*iz);
+
+//    field_t* f0   = fa.voxel( ix  , iy  , iz   );
+//    field_t* fz   = fa.voxel( ix  , iy  , iz+1 );
+//    field_t* fy   = fa.voxel( ix  , iy+1, iz   );
+//    field_t* fyz  = fa.voxel( ix  , iy+1, iz+1 );
+//    field_t* fx   = fa.voxel( ix+1, iy  , iz   );
+//    field_t* fxz  = fa.voxel( ix+1, iy  , iz+1 );
+//    field_t* fxy  = fa.voxel( ix+1, iy+1, iz   );
+//    field_t* fxyz = fa.voxel( ix+1, iy+1, iz+1 );
+
+    float hax = qdt_2mc * (
+        (1.-dx)*(1.-dy)*(1.-dz) * (fa.f0[ il          ]).ex
+      + (1.-dx)*(1.-dy)*    dz  * (fa.f0[ il      +oz ]).ex
+      + (1.-dx)*    dy *(1.-dz) * (fa.f0[ il   +oy    ]).ex
+      + (1.-dx)*    dy *    dz  * (fa.f0[ il   +oy+oz ]).ex
+      +     dx *(1.-dy)*(1.-dz) * (fa.f0[ il+ox       ]).ex
+      +     dx *(1.-dy)*    dz  * (fa.f0[ il+ox   +oz ]).ex
+      +     dx *    dy *(1.-dz) * (fa.f0[ il+ox+oy    ]).ex
+      +     dx *    dy *    dz  * (fa.f0[ il+ox+oy+oz ]).ex
+    );
+    float hay = qdt_2mc * (
+        (1.-dx)*(1.-dy)*(1.-dz) * (fa.f0[ il          ]).ey
+      + (1.-dx)*(1.-dy)*    dz  * (fa.f0[ il      +oz ]).ey
+      + (1.-dx)*    dy *(1.-dz) * (fa.f0[ il   +oy    ]).ey
+      + (1.-dx)*    dy *    dz  * (fa.f0[ il   +oy+oz ]).ey
+      +     dx *(1.-dy)*(1.-dz) * (fa.f0[ il+ox       ]).ey
+      +     dx *(1.-dy)*    dz  * (fa.f0[ il+ox   +oz ]).ey
+      +     dx *    dy *(1.-dz) * (fa.f0[ il+ox+oy    ]).ey
+      +     dx *    dy *    dz  * (fa.f0[ il+ox+oy+oz ]).ey
+    );
+    float haz = qdt_2mc * (
+        (1.-dx)*(1.-dy)*(1.-dz) * (fa.f0[ il          ]).ez
+      + (1.-dx)*(1.-dy)*    dz  * (fa.f0[ il      +oz ]).ez
+      + (1.-dx)*    dy *(1.-dz) * (fa.f0[ il   +oy    ]).ez
+      + (1.-dx)*    dy *    dz  * (fa.f0[ il   +oy+oz ]).ez
+      +     dx *(1.-dy)*(1.-dz) * (fa.f0[ il+ox       ]).ez
+      +     dx *(1.-dy)*    dz  * (fa.f0[ il+ox   +oz ]).ez
+      +     dx *    dy *(1.-dz) * (fa.f0[ il+ox+oy    ]).ez
+      +     dx *    dy *    dz  * (fa.f0[ il+ox+oy+oz ]).ez
+    );
+
+    float cbx = (
+        (1.-dx)*(1.-dy)*(1.-dz) * (fa.f0[ il          ]).bx
+      + (1.-dx)*(1.-dy)*    dz  * (fa.f0[ il      +oz ]).bx
+      + (1.-dx)*    dy *(1.-dz) * (fa.f0[ il   +oy    ]).bx
+      + (1.-dx)*    dy *    dz  * (fa.f0[ il   +oy+oz ]).bx
+      +     dx *(1.-dy)*(1.-dz) * (fa.f0[ il+ox       ]).bx
+      +     dx *(1.-dy)*    dz  * (fa.f0[ il+ox   +oz ]).bx
+      +     dx *    dy *(1.-dz) * (fa.f0[ il+ox+oy    ]).bx
+      +     dx *    dy *    dz  * (fa.f0[ il+ox+oy+oz ]).bx
+    );
+    float cby = (
+        (1.-dx)*(1.-dy)*(1.-dz) * (fa.f0[ il          ]).by
+      + (1.-dx)*(1.-dy)*    dz  * (fa.f0[ il      +oz ]).by
+      + (1.-dx)*    dy *(1.-dz) * (fa.f0[ il   +oy    ]).by
+      + (1.-dx)*    dy *    dz  * (fa.f0[ il   +oy+oz ]).by
+      +     dx *(1.-dy)*(1.-dz) * (fa.f0[ il+ox       ]).by
+      +     dx *(1.-dy)*    dz  * (fa.f0[ il+ox   +oz ]).by
+      +     dx *    dy *(1.-dz) * (fa.f0[ il+ox+oy    ]).by
+      +     dx *    dy *    dz  * (fa.f0[ il+ox+oy+oz ]).by
+    );
+    float cbz = (
+        (1.-dx)*(1.-dy)*(1.-dz) * (fa.f0[ il          ]).bz
+      + (1.-dx)*(1.-dy)*    dz  * (fa.f0[ il      +oz ]).bz
+      + (1.-dx)*    dy *(1.-dz) * (fa.f0[ il   +oy    ]).bz
+      + (1.-dx)*    dy *    dz  * (fa.f0[ il   +oy+oz ]).bz
+      +     dx *(1.-dy)*(1.-dz) * (fa.f0[ il+ox       ]).bz
+      +     dx *(1.-dy)*    dz  * (fa.f0[ il+ox   +oz ]).bz
+      +     dx *    dy *(1.-dz) * (fa.f0[ il+ox+oy    ]).bz
+      +     dx *    dy *    dz  * (fa.f0[ il+ox+oy+oz ]).bz
+    );
+
+    ///////////////////
+    // The mover logic below uses nearest voxel index and
+    // offsets so adjust (ix,iy,iz) and (dx,dy,dz) back to "usual"
+
+    // Voxel indices
+    ix = (int)(p->x + one_half);  // particles use cell-centered coordinates
+    iy = (int)(p->y + one_half);
+    iz = (int)(p->z + one_half);
+    // Voxel offsets on interval [-1,1]
+    dx = two*((p->x) - ix);
+    dy = two*((p->y) - iy);
+    dz = two*((p->z) - iz);
+#else
+#ifdef SHAPE_TSC
+
+    // Voxel indices
+    int ix = (int)(p->x + one_half);  // particles use cell-centered coordinates
+    int iy = (int)(p->y + one_half);
+    int iz = (int)(p->z + one_half);
+    // Voxel offsets on interval [-1,1]
+    float dx = two*((p->x) - ix);
+    float dy = two*((p->y) - iy);
+    float dz = two*((p->z) - iz);
+
+    //interp_t* ic = ia.voxel(ix,iy,iz);
+
+    // TSC = 27 points required
+    // Hockney/Eastwood Eqn (5-88)
+    //float qw  = p->w * qsp_rV;
+    //float wmx = 1/2 * (3/2 - (2+dx)/2) * (3/2 - (2+dx)/2)
+    //float w0  = 3/4 - (dx/2)*(dx/2);
+    //float wx  = 1/2 * (3/2 - (2-dx)/2) * (3/2 - (2-dx)/2)
+    // Refactored form
+    float wxs[3] = { one_eighth * (one-dx)*(one-dx),
+                     one_fourth * (three - dx*dx),
+                     one_eighth * (one+dx)*(one+dx) };
+    float wys[3] = { one_eighth * (one-dy)*(one-dy),
+                     one_fourth * (three - dy*dy),
+                     one_eighth * (one+dy)*(one+dy) };
+    float wzs[3] = { one_eighth * (one-dz)*(one-dz),
+                     one_fourth * (three - dz*dz),
+                     one_eighth * (one+dz)*(one+dz) };
+    float hax = 0.;
+    float hay = 0.;
+    float haz = 0.;
+    float cbx = 0.;
+    float cby = 0.;
+    float cbz = 0.;
+    for (int ii=-1; ii<=1; ++ii) {
+    for (int jj=-1; jj<=1; ++jj) {
+    for (int kk=-1; kk<=1; ++kk) {
+      field_t* fv = fa.voxel( ix+ii, iy+jj, iz+kk );
+      float w3 = wxs[ii+1] * wys[jj+1] * wzs[kk+1];
+      hax += w3 * fv->ex;
+      hay += w3 * fv->ey;
+      haz += w3 * fv->ez;
+      cbx += w3 * fv->bx;
+      cby += w3 * fv->by;
+      cbz += w3 * fv->bz;
+    }}}
+
+    hax *= qdt_2mc;
+    hay *= qdt_2mc;
+    haz *= qdt_2mc;
+
+// endifdef shape_TSC
+#endif
+// endifdef shape_CIC
+#endif
+// endifdef shape_NGP || SHAPE_QS
+#endif
 
     //if (ip == 0) {
     //  printf("mover ind %d xyz %.3f %.3f %.3f uxyz % .3f % .3f % .3f . . . ixyz %d %d %d dxyz % .3f % .3f % .3f haxyz % f % f % f cbxyz % f % f % f\n",
@@ -240,6 +497,7 @@ void ParticleArray::move_uncenter() {
 // can be easily vectorized; the deposit is hard to vectorize without
 // the accumulator arrays or careful OpenMP threading...
 
+#ifdef SHAPE_QS
 void ParticleArray::deposit(int unwind) {
 
   const float one            = 1.;
@@ -349,6 +607,231 @@ void ParticleArray::deposit(int unwind) {
   }  // end particle deposit loop
 
 } // end ParticleArray::deposit()
+#else
+#ifdef SHAPE_NGP
+void ParticleArray::deposit(int unwind) {
+
+  const float one_half       = 1./2.;
+
+  const float cdt_dx         = fa.dt/fa.hx;  // implicit c=1 in c*dt/dx
+  const float cdt_dy         = fa.dt/fa.hy;
+  const float cdt_dz         = fa.dt/fa.hz;
+
+  const float qsp_rV = qsp/(fa.hx*fa.hy*fa.hz);
+
+  // Deposit at particle streak midpoint,
+  // or deposit at current particle position?
+  const float frac = (unwind == 1) ? one_half : 0;
+
+  for (int ip=0; ip<np; ++ip) {
+
+    particle_t* p = &(p0[ip]);
+
+    // Unwind to get streak midpoint
+    float xmh = (p->x - frac*(p->ux)*cdt_dx);  // xmh = x minus half step
+    float ymh = (p->y - frac*(p->uy)*cdt_dy);
+    float zmh = (p->z - frac*(p->uz)*cdt_dz);
+
+    // Midpoint voxel indices
+    int ix = (int)(xmh + one_half);  // particles use cell-centered coordinates
+    int iy = (int)(ymh + one_half);
+    int iz = (int)(zmh + one_half);
+
+    // Combined (charge x particle weight x inverse cell size) factor
+    // for deposit
+    float w0 = p->w * qsp_rV;
+
+    // Ari's quadratic spline deposit scheme current at t=n+1/2
+    field_t* f0 = fa.voxel(ix,iy,iz);
+    f0->jfx +=  w0*p->ux;
+    f0->jfy +=  w0*p->uy;
+    f0->jfz +=  w0*p->uz;
+    // Ari's quadratic spline deposit scheme density at t=n+1/2 (not t=n+1 !!)
+    f0->rhof += w0;
+
+  }  // end particle deposit loop
+
+} // end ParticleArray::deposit()
+#else
+#ifdef SHAPE_CIC
+
+void ParticleArray::deposit(int unwind) {
+
+  const float one      = 1.;
+  const float one_half = 1./2.;
+
+  const float cdt_dx   = fa.dt/fa.hx;  // implicit c=1 in c*dt/dx
+  const float cdt_dy   = fa.dt/fa.hy;
+  const float cdt_dz   = fa.dt/fa.hz;
+
+  const float qsp_rV = qsp/(fa.hx*fa.hy*fa.hz);
+
+  // Deposit at particle streak midpoint,
+  // or deposit at current particle position?
+  const float frac = (unwind == 1) ? one_half : 0;
+
+  for (int ip=0; ip<np; ++ip) {
+
+    particle_t* p = &(p0[ip]);
+
+    // Unwind to get streak midpoint
+    float xmh = (p->x - frac*(p->ux)*cdt_dx);  // xmh = x minus half step
+    float ymh = (p->y - frac*(p->uy)*cdt_dy);
+    float zmh = (p->z - frac*(p->uz)*cdt_dz);
+
+    // Voxel indices nearest (below/left) of streak midpoint
+    int ix = (int)(xmh);  // particles use cell-centered coordinates
+    int iy = (int)(ymh);
+    int iz = (int)(zmh);
+    // "Lower/left" voxel offsets on interval [0,1]
+    // unlike other parts of VPIC code
+    float dx = xmh - ix;
+    float dy = ymh - iy;
+    float dz = zmh - iz;
+
+    // CIC = area weighting = trilinear interpolation
+    field_t* f0   = fa.voxel( ix  , iy  , iz   );
+    field_t* fz   = fa.voxel( ix  , iy  , iz+1 );
+    field_t* fy   = fa.voxel( ix  , iy+1, iz   );
+    field_t* fyz  = fa.voxel( ix  , iy+1, iz+1 );
+    field_t* fx   = fa.voxel( ix+1, iy  , iz   );
+    field_t* fxz  = fa.voxel( ix+1, iy  , iz+1 );
+    field_t* fxy  = fa.voxel( ix+1, iy+1, iz   );
+    field_t* fxyz = fa.voxel( ix+1, iy+1, iz+1 );
+    // No interpolation is actually required...
+    // what I could do with interp array is have each voxel store its
+    // 7 neighbor values?
+
+    // Combined charge x particle weight x inverse cell size
+    float qw   = p->w * qsp_rV;
+    float w0   = qw * (1.-dx)*(1.-dy)*(1.-dz);
+    float wz   = qw * (1.-dx)*(1.-dy)*    dz ;
+    float wy   = qw * (1.-dx)*    dy *(1.-dz);
+    float wyz  = qw * (1.-dx)*    dy *    dz ;
+    float wx   = qw *     dx *(1.-dy)*(1.-dz);
+    float wxz  = qw *     dx *(1.-dy)*    dz ;
+    float wxy  = qw *     dx *    dy *(1.-dz);
+    float wxyz = qw *     dx *    dy *    dz ;
+
+    // Area weighting
+      f0->jfx +=   w0 * p->ux;
+      fz->jfx +=   wz * p->ux;
+      fy->jfx +=   wy * p->ux;
+     fyz->jfx +=  wyz * p->ux;
+      fx->jfx +=   wx * p->ux;
+     fxz->jfx +=  wxz * p->ux;
+     fxy->jfx +=  wxy * p->ux;
+    fxyz->jfx += wxyz * p->ux;
+
+      f0->jfy +=   w0 * p->uy;
+      fz->jfy +=   wz * p->uy;
+      fy->jfy +=   wy * p->uy;
+     fyz->jfy +=  wyz * p->uy;
+      fx->jfy +=   wx * p->uy;
+     fxz->jfy +=  wxz * p->uy;
+     fxy->jfy +=  wxy * p->uy;
+    fxyz->jfy += wxyz * p->uy;
+
+      f0->jfz +=   w0 * p->uz;
+      fz->jfz +=   wz * p->uz;
+      fy->jfz +=   wy * p->uz;
+     fyz->jfz +=  wyz * p->uz;
+      fx->jfz +=   wx * p->uz;
+     fxz->jfz +=  wxz * p->uz;
+     fxy->jfz +=  wxy * p->uz;
+    fxyz->jfz += wxyz * p->uz;
+
+    // Density deposited at t=n+1/2 (not t=n+1 !!)
+      f0->rhof +=   w0;
+      fz->rhof +=   wz;
+      fy->rhof +=   wy;
+     fyz->rhof +=  wyz;
+      fx->rhof +=   wx;
+     fxz->rhof +=  wxz;
+     fxy->rhof +=  wxy;
+    fxyz->rhof += wxyz;
+
+  }  // end particle deposit loop
+
+} // end ParticleArray::deposit()
+#else
+#ifdef SHAPE_TSC
+
+void ParticleArray::deposit(int unwind) {
+
+  const float one      = 1.;
+  const float one_half = 1./2.;
+  const float two      = 2.;
+
+  const float cdt_dx   = fa.dt/fa.hx;  // implicit c=1 in c*dt/dx
+  const float cdt_dy   = fa.dt/fa.hy;
+  const float cdt_dz   = fa.dt/fa.hz;
+
+  const float qsp_rV = qsp/(fa.hx*fa.hy*fa.hz);
+
+  // Deposit at particle streak midpoint,
+  // or deposit at current particle position?
+  const float frac = (unwind == 1) ? one_half : 0;
+
+  for (int ip=0; ip<np; ++ip) {
+
+    particle_t* p = &(p0[ip]);
+
+    // Unwind to get streak midpoint
+    float xmh = (p->x - frac*(p->ux)*cdt_dx);  // xmh = x minus half step
+    float ymh = (p->y - frac*(p->uy)*cdt_dy);
+    float zmh = (p->z - frac*(p->uz)*cdt_dz);
+
+    // Midpoint voxel indices
+    int ix = (int)(xmh + one_half);  // particles use cell-centered coordinates
+    int iy = (int)(ymh + one_half);
+    int iz = (int)(zmh + one_half);
+    // Midpoint voxel offsets on interval [-1,1]
+    float dx = two*(xmh - ix);
+    float dy = two*(ymh - iy);
+    float dz = two*(zmh - iz);
+
+    // TSC = 27 points required
+    // Hockney/Eastwood Eqn (5-88)
+    //float qw  = p->w * qsp_rV;
+    //float wmx = 1/2 * (3/2 - (2+dx)/2) * (3/2 - (2+dx)/2)
+    //float w0  = 3/4 - (dx/2)*(dx/2);
+    //float wx  = 1/2 * (3/2 - (2-dx)/2) * (3/2 - (2-dx)/2)
+    // Refactored form
+    float qw     = p->w * qsp_rV / 512.;
+    float wxs[3] = {     (1-dx)*(1-dx),
+                     2 * (3 - dx*dx),
+                         (1+dx)*(1+dx) };
+    float wys[3] = {     (1-dy)*(1-dy),
+                     2 * (3 - dy*dy),
+                         (1+dy)*(1+dy) };
+    float wzs[3] = {     (1-dz)*(1-dz),
+                     2 * (3 - dz*dz),
+                         (1+dz)*(1+dz) };
+
+    for (int ii=-1; ii<=1; ++ii) {
+    for (int jj=-1; jj<=1; ++jj) {
+    for (int kk=-1; kk<=1; ++kk) {
+      field_t* fv = fa.voxel( ix+ii, iy+jj, iz+kk );
+      float w3 = qw * wxs[ii+1] * wys[jj+1] * wzs[kk+1];
+      fv-> jfx += w3 * p->ux;
+      fv-> jfy += w3 * p->uy;
+      fv-> jfz += w3 * p->uz;
+      fv->rhof += w3;
+    }}}
+
+  }  // end particle deposit loop
+
+} // end ParticleArray::deposit()
+
+// endifdef shape_TSC
+#endif
+// endifdef shape_CIC
+#endif
+// endifdef shape_NGP
+#endif
+// endifdef shape_QS
+#endif
 
 
 // =====================================
