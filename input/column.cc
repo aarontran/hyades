@@ -1,6 +1,5 @@
 // ----------------------------------------------------------------------------
-// Test problem: 1D domain with anisotropic protons to drive cyclotron waves
-// matched to Hybrid-VPIC deck "examples/pcai"
+// Test problem: 2D plasma column cross section mimicking WHAM device
 // ----------------------------------------------------------------------------
 
 #include <cmath>  // for sqrt

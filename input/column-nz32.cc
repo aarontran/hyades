@@ -1,6 +1,5 @@
 // ----------------------------------------------------------------------------
-// Test problem: 1D domain with anisotropic protons to drive cyclotron waves
-// matched to Hybrid-VPIC deck "examples/pcai"
+// Test problem: 2D plasma column cross section mimicking WHAM device
 // ----------------------------------------------------------------------------
 
 #include <cmath>  // for sqrt
@@ -20,7 +19,7 @@ void user_param(param_t* par) {
   par->idumpf = 1000;     // fields dump interval, 0.5 Omci^-1
   par->idumpp =   0;      // particles dump interval, skip for now
   //par->isort = 20;
-  par->ilast = 33000;     // run duration 330 Omci^-1
+  par->ilast = 1000;//33000;     // run duration 330 Omci^-1, lowered for prototyping
   par->Lx = (6.667/96);
   par->Ly = 6.667;
   par->Lz = 6.667;
@@ -37,8 +36,8 @@ void user_param(param_t* par) {
 
   par->dt = 0.01;
 
-  par->nppc  =     2000;
-  par->npmax = 20000000;
+  par->nppc  =     200; // low PPC for prototyping
+  par->npmax = 2000000;
 
 }
 
