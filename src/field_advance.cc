@@ -43,6 +43,11 @@ void FieldArray::advance_eb_rk4_ctrmesh(int isub, int nsub) {
   const float subdt_half  = dt/nsub_ / 2.;
   const float subdt_sixth = dt/nsub_ / 6.;
 
+  const float sixth = 1./6;
+  const float third = 1./3;
+  const float half  = 1./2;
+  const float two_thirds = 2./3;
+
   // RK4 scheme.
   // 1. Compute k1 using B_n, E_n
   // 2. Compute k2 using B_{n+1/2)',  E_{n+1/2}'
@@ -54,16 +59,19 @@ void FieldArray::advance_eb_rk4_ctrmesh(int isub, int nsub) {
   //               (tmpx,tmpy,tmpz) to accumulate k1,k2,k3,k4 for final B_{n+1}
   //               (smex,smey,smez) for hyper-resistivity
 
+  // Scheme changed to modified version of Blum's low-memory scheme
+  // from Hockney/Eastwood Equation (4-131)
+
   // -------
   // Setup.
   // -------
-  field_t* fv = f0;
-  for (int ii = 0; ii < nvall; ++ii) {
-    fv->bx0 = fv->bx;
-    fv->by0 = fv->by;
-    fv->bz0 = fv->bz;
-    ++fv;
-  }
+  //field_t* fv = f0;
+  //for (int ii = 0; ii < nvall; ++ii) {
+  //  fv->bx0 = fv->bx;
+  //  fv->by0 = fv->by;
+  //  fv->bz0 = fv->bz;
+  //  ++fv;
+  //}
 
   // -------
   // Step 1.
@@ -86,15 +94,16 @@ void FieldArray::advance_eb_rk4_ctrmesh(int isub, int nsub) {
     float k1x = - r2hy*(fy->ez - fmy->ez) + r2hz*(fz->ey - fmz->ey);  // -(∂y Ez - ∂z Ey)
     float k1y = - r2hz*(fz->ex - fmz->ex) + r2hx*(fx->ez - fmx->ez);  // -(∂z Ex - ∂x Ez)
     float k1z = - r2hx*(fx->ey - fmx->ey) + r2hy*(fy->ex - fmy->ex);  // -(∂x Ey - ∂y Ex)
-    // Accumulate final B_{n+1}
-    // notice "=" assignment unlike "+=" in following RK4 steps
-    fv->tmpx = k1x;
+    k1x *= subdt; // p = DT f(z_0)
+    k1y *= subdt;
+    k1z *= subdt;
+    // B_{n+1/2}'
+    fv->bx += half * k1x; // z += p/2
+    fv->by += half * k1y;
+    fv->bz += half * k1z;
+    fv->tmpx = k1x; // q = p
     fv->tmpy = k1y;
     fv->tmpz = k1z;
-    // B_{n+1/2}'
-    fv->bx = fv->bx0 + subdt_half * k1x;
-    fv->by = fv->by0 + subdt_half * k1y;
-    fv->bz = fv->bz0 + subdt_half * k1z;
   }}}
 
   ghost_copy_b();
@@ -120,14 +129,19 @@ void FieldArray::advance_eb_rk4_ctrmesh(int isub, int nsub) {
     float k2x = - r2hy*(fy->ez - fmy->ez) + r2hz*(fz->ey - fmz->ey);  // -(∂y Ez - ∂z Ey)
     float k2y = - r2hz*(fz->ex - fmz->ex) + r2hx*(fx->ez - fmx->ez);  // -(∂z Ex - ∂x Ez)
     float k2z = - r2hx*(fx->ey - fmx->ey) + r2hy*(fy->ex - fmy->ex);  // -(∂x Ey - ∂y Ex)
-    // Accumulate final B_{n+1}
-    fv->tmpx += 2 * k2x;
-    fv->tmpy += 2 * k2y;
-    fv->tmpz += 2 * k2z;
+    k2x *= subdt; // p = DT f(z_1)
+    k2y *= subdt;
+    k2z *= subdt;
     // B_{n+1/2}''
-    fv->bx = fv->bx0 + subdt_half * k2x;
-    fv->by = fv->by0 + subdt_half * k2y;
-    fv->bz = fv->bz0 + subdt_half * k2z;
+    fv->bx += half * (k2x - fv->tmpx); // z += p/2 - q/2
+    fv->by += half * (k2y - fv->tmpy);
+    fv->bz += half * (k2z - fv->tmpz);
+    fv->tmpx = sixth * fv->tmpx + third * k2x; // q = q/6 + p/3
+    fv->tmpy = sixth * fv->tmpy + third * k2y;
+    fv->tmpz = sixth * fv->tmpz + third * k2z;
+    fv->tmpkx = k2x;  // need to store p for next loop
+    fv->tmpky = k2y;  // the one place where this temp variable is needed
+    fv->tmpkz = k2z;  // I don't see an easy way around it
   }}}
 
   ghost_copy_b();
@@ -153,14 +167,16 @@ void FieldArray::advance_eb_rk4_ctrmesh(int isub, int nsub) {
     float k3x = - r2hy*(fy->ez - fmy->ez) + r2hz*(fz->ey - fmz->ey);  // -(∂y Ez - ∂z Ey)
     float k3y = - r2hz*(fz->ex - fmz->ex) + r2hx*(fx->ez - fmx->ez);  // -(∂z Ex - ∂x Ez)
     float k3z = - r2hx*(fx->ey - fmx->ey) + r2hy*(fy->ex - fmy->ex);  // -(∂x Ey - ∂y Ex)
-    // Accumulate final B_{n+1}
-    fv->tmpx += 2 * k3x;
-    fv->tmpy += 2 * k3y;
-    fv->tmpz += 2 * k3z;
+    k3x *= subdt; // DT f(z_2)
+    k3y *= subdt;
+    k3z *= subdt;
     // B_{n+1}'
-    fv->bx = fv->bx0 + subdt * k3x;
-    fv->by = fv->by0 + subdt * k3y;
-    fv->bz = fv->bz0 + subdt * k3z;
+    fv->bx += k3x - half*fv->tmpkx; // Hockney/Eastwood (4-131)
+    fv->by += k3y - half*fv->tmpky; // z += DT f(z_2) - p,previous/2
+    fv->bz += k3z - half*fv->tmpkz;
+    fv->tmpx -= two_thirds * k3x; // q -= 2/3 * DT f(z_2)
+    fv->tmpy -= two_thirds * k3y;
+    fv->tmpz -= two_thirds * k3z;
   }}}
 
   ghost_copy_b();
@@ -186,10 +202,19 @@ void FieldArray::advance_eb_rk4_ctrmesh(int isub, int nsub) {
     float k4x = - r2hy*(fy->ez - fmy->ez) + r2hz*(fz->ey - fmz->ey);  // -(∂y Ez - ∂z Ey)
     float k4y = - r2hz*(fz->ex - fmz->ex) + r2hx*(fx->ez - fmx->ez);  // -(∂z Ex - ∂x Ez)
     float k4z = - r2hx*(fx->ey - fmx->ey) + r2hy*(fy->ex - fmy->ex);  // -(∂x Ey - ∂y Ex)
+    k4x *= subdt; // DT f(z_3)
+    k4y *= subdt;
+    k4z *= subdt;
     // Final B_{n+1}
-    fv->bx = fv->bx0 + subdt_sixth * (fv->tmpx + k4x);
-    fv->by = fv->by0 + subdt_sixth * (fv->tmpy + k4y);
-    fv->bz = fv->bz0 + subdt_sixth * (fv->tmpz + k4z);
+    fv->bx += fv->tmpx + sixth*k4x; // z += q + DT f(z_3) / 6
+    fv->by += fv->tmpy + sixth*k4y;
+    fv->bz += fv->tmpz + sixth*k4z;
+    // Just before this step, we have
+    //     bx = bx^n + (k3)
+    //   tmpx = (k1)/6 + (k2)/3 - 2/3 * (k3)
+    // Therefore we obtain
+    //     bx = bx^n + (k1)/6 + (k2)/3 + (k3)/3 + (k4)/6
+    // as expected for RK4 scheme.
   }}}
 
   ghost_copy_b();

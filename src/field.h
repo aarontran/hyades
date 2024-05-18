@@ -9,7 +9,8 @@ typedef struct field {
   // other code that accesses struct members by explicit index or name
   float ex,     ey,     ez,     tmpx;
   float bx,     by,     bz,     tmpy;
-  float bx0,    by0,    bz0,    tmpz;
+  //float bx0,    by0,    bz0,    tmpz;
+  float tmpkx,  tmpky,  tmpkz,  tmpz;
   float jfx,    jfy,    jfz,    rhof;
   float jfx0,   jfy0,   jfz0,   rhof0;
   float smex,   smey,   smez,   pad;//pexx;
