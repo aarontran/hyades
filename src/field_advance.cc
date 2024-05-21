@@ -342,7 +342,26 @@ void FieldArray::advance_e_ctrmesh(float frac) {
 
   }}}
 
+
   if (hyb_hypereta_ <= 0) {
+
+    if (field_bc_x == 1) {
+      // Scheme: force E=0 in a one live-cell slab after E field is computed.
+      // this is matched to the particle reflection B/C in particle_move.cc
+      for (int kk = ng; kk < (nz+ng); ++kk) {
+      for (int jj = ng; jj < (ny+ng); ++jj) {
+        field_t* fv;
+        fv = voxel(ng, jj, kk);
+        fv->ex = 0;
+        fv->ey = 0;
+        fv->ez = 0;
+        fv = voxel(nx+ng-1, jj, kk);
+        fv->ex = 0;
+        fv->ey = 0;
+        fv->ez = 0;
+      }}
+    }
+
     // Field advance methods are responsible for updating their "own" ghosts.
     // TODO branching returns here is a bad idea (basically a GOTO),
     // split hyper-resistivity into its own method -ATr,2024feb25
@@ -398,6 +417,24 @@ void FieldArray::advance_e_ctrmesh(float frac) {
     fv->ey -= hyb_hypereta_*( rhz*(fz->smex - fmz->smex) - rhx*(fx->smez - fmx->smez) );
     fv->ez -= hyb_hypereta_*( rhx*(fx->smey - fmx->smey) - rhy*(fy->smex - fmy->smex) );
   }}}
+
+  if (field_bc_x == 1) {
+    // Scheme: force E=0 in a one live-cell slab after E field is computed.
+    // this is matched to the particle reflection B/C in particle_move.cc
+    // TODO repetition before/after hypereta is bad practice -ATr,2024may21
+    for (int kk = ng; kk < (nz+ng); ++kk) {
+    for (int jj = ng; jj < (ny+ng); ++jj) {
+        field_t* fv;
+        fv = voxel(ng, jj, kk);
+        fv->ex = 0;
+        fv->ey = 0;
+        fv->ez = 0;
+        fv = voxel(nx+ng-1, jj, kk);
+        fv->ex = 0;
+        fv->ey = 0;
+        fv->ez = 0;
+    }}
+  }
 
   // Field advance methods are responsible for updating their "own" ghosts.
   // TODO branching returns here is a bad idea (basically a GOTO),

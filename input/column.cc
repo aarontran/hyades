@@ -59,7 +59,7 @@ void user_initialize(FieldArray* fa, ParticleArray* ions, param_t* par) {
   fa->particle_bc_x = 0;  // periodic = 0, reflecting = 1
   fa->particle_bc_y = 0;  // periodic = 0, reflecting = 1 (not implemented for y/z yet)
   fa->particle_bc_z = 0;  // periodic = 0, reflecting = 1 (not implemented for y/z yet)
-  fa->field_bc_x = 0;  // periodic = 0, conducting zero E = 1 (not implemented yet)
+  fa->field_bc_x = 0;  // periodic = 0, conducting zero E = 1
   fa->field_bc_y = 0;  // periodic = 0, conducting zero E = 1 (not implemented yet)
   fa->field_bc_z = 0;  // periodic = 0, conducting zero E = 1 (not implemented yet)
 
