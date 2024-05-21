@@ -69,9 +69,11 @@ FieldArray::FieldArray(int nx_, int ny_, int nz_, int ng_,
   for (int kk=(   ng); kk < (nz+ng); ++kk) {
   for (int jj=(   ng); jj < (ny+ng); ++jj) {
   for (int ii=(    0); ii < (   ng); ++ii) {
-    //if ((jj==ng)&&(kk==ng)) printf("Left x slab %d <- %d\n", ii, nx+ii);
-    *ivghost = ivoxel(      ii,       jj,       kk);
-    *ivghsrc = ivoxel(   nx+ii,       jj,       kk);
+    int ig0 = ii;
+    int is1 = (nx+ng-1) - (ng-ii-1) % nx;  // resolves to nx+ii for ng <= nx
+    //if ((jj==ng)&&(kk==ng)) printf("Left x slab %d <- %d\n", ig0, is1);
+    *ivghost = ivoxel( ig0,  jj,  kk);
+    *ivghsrc = ivoxel( is1,  jj,  kk);
     ++ivghost;
     ++ivghsrc;
     ++count;
@@ -80,9 +82,11 @@ FieldArray::FieldArray(int nx_, int ny_, int nz_, int ng_,
   for (int kk=(   ng); kk < (nz+ng); ++kk) {
   for (int jj=(    0); jj < (   ng); ++jj) {
   for (int ii=(   ng); ii < (nx+ng); ++ii) {
-    //if ((ii==ng)&&(kk==ng)) printf("Left y slab %d <- %d\n", jj, ny+jj);
-    *ivghost = ivoxel(      ii,       jj,       kk);
-    *ivghsrc = ivoxel(      ii,    ny+jj,       kk);
+    int jg0 = jj;
+    int js1 = (ny+ng-1) - (ng-jj-1) % ny;  // resolves to ny+jj for ng <= ny
+    //if ((ii==ng)&&(kk==ng)) printf("Left y slab %d <- %d\n", jg0, js1);
+    *ivghost = ivoxel(  ii, jg0,  kk);
+    *ivghsrc = ivoxel(  ii, js1,  kk);
     ++ivghost;
     ++ivghsrc;
     ++count;
@@ -91,9 +95,11 @@ FieldArray::FieldArray(int nx_, int ny_, int nz_, int ng_,
   for (int kk=(    0); kk < (   ng); ++kk) {
   for (int jj=(   ng); jj < (ny+ng); ++jj) {
   for (int ii=(   ng); ii < (nx+ng); ++ii) {
-    //if ((ii==ng)&&(jj==ng)) printf("Left z slab %d <- %d\n", kk, nz+kk);
-    *ivghost = ivoxel(      ii,       jj,       kk);
-    *ivghsrc = ivoxel(      ii,       jj,    nz+kk);
+    int kg0 = kk;
+    int ks1 = (nz+ng-1) - (ng-kk-1) % nz;  // resolves to nz+kk for ng <= nz
+    //if ((ii==ng)&&(jj==ng)) printf("Left z slab %d <- %d\n", kg0, ks1);
+    *ivghost = ivoxel(  ii,  jj, kg0);
+    *ivghsrc = ivoxel(  ii,  jj, ks1);
     ++ivghost;
     ++ivghsrc;
     ++count;
@@ -103,9 +109,11 @@ FieldArray::FieldArray(int nx_, int ny_, int nz_, int ng_,
   for (int kk=(   ng); kk < (nz+ng); ++kk) {
   for (int jj=(   ng); jj < (ny+ng); ++jj) {
   for (int ii=(    0); ii < (   ng); ++ii) {
-    //if ((jj==ng)&&(kk==ng)) printf("Right x slab %d <- %d\n", nx+ng+ii, ng+ii);
-    *ivghost = ivoxel(nx+ng+ii,       jj,       kk);
-    *ivghsrc = ivoxel(   ng+ii,       jj,       kk);
+    int ig1 = nx+ng+ii;
+    int is0 = ng + ii % nx;
+    //if ((jj==ng)&&(kk==ng)) printf("Right x slab %d <- %d\n", ig1, is0);
+    *ivghost = ivoxel( ig1,  jj,  kk);
+    *ivghsrc = ivoxel( is0,  jj,  kk);
     ++ivghost;
     ++ivghsrc;
     ++count;
@@ -114,9 +122,11 @@ FieldArray::FieldArray(int nx_, int ny_, int nz_, int ng_,
   for (int kk=(   ng); kk < (nz+ng); ++kk) {
   for (int jj=(    0); jj < (   ng); ++jj) {
   for (int ii=(   ng); ii < (nx+ng); ++ii) {
-    //if ((ii==ng)&&(kk==ng)) printf("Right y slab %d <- %d\n", ny+ng+jj, ng+jj);
-    *ivghost = ivoxel(      ii, ny+ng+jj,       kk);
-    *ivghsrc = ivoxel(      ii,    ng+jj,       kk);
+    int jg1 = ny+ng+jj;
+    int js0 = ng + jj % ny;
+    //if ((ii==ng)&&(kk==ng)) printf("Right y slab %d <- %d\n", jg1, js0);
+    *ivghost = ivoxel(  ii, jg1,  kk);
+    *ivghsrc = ivoxel(  ii, js0,  kk);
     ++ivghost;
     ++ivghsrc;
     ++count;
@@ -125,9 +135,11 @@ FieldArray::FieldArray(int nx_, int ny_, int nz_, int ng_,
   for (int kk=(    0); kk < (   ng); ++kk) {
   for (int jj=(   ng); jj < (ny+ng); ++jj) {
   for (int ii=(   ng); ii < (nx+ng); ++ii) {
-    //if ((ii==ng)&&(jj==ng)) printf("Right z slab %d <- %d\n", nz+ng+kk, ng+kk);
-    *ivghost = ivoxel(      ii,       jj, nz+ng+kk);
-    *ivghsrc = ivoxel(      ii,       jj,    ng+kk);
+    int kg1 = nz+ng+kk;
+    int ks0 = ng + kk % nz;
+    //if ((ii==ng)&&(jj==ng)) printf("Right z slab %d <- %d\n", kg1, ks0);
+    *ivghost = ivoxel(  ii,  jj, kg1);
+    *ivghsrc = ivoxel(  ii,  jj, ks0);
     ++ivghost;
     ++ivghsrc;
     ++count;
@@ -139,96 +151,87 @@ FieldArray::FieldArray(int nx_, int ny_, int nz_, int ng_,
   // (x,y,z) = (1,1,1) = upper right
   // for now, don't worry about locality of voxel indices
   // ... b/c the cost of ghost cell ops should be relatively small
-  // printf statements are deisgned for block copy/paste during code
-  // ... development
+  // code is designed for block copy/paste during development
 
   for (int kk=0; kk < ng; ++kk) {
   for (int jj=0; jj < ng; ++jj) {
   for (int ii=0; ii < ng; ++ii) {
+
+    // left(0) ghosts <- right(1) source cells
+    int ig0 = ii;
+    int jg0 = jj;
+    int kg0 = kk;
+    int is1 = (nx+ng-1) - (ng-ii-1) % nx;  // resolves to nx+ii for ng <= nx
+    int js1 = (ny+ng-1) - (ng-jj-1) % ny;  // resolves to ny+jj for ng <= ny
+    int ks1 = (nz+ng-1) - (ng-kk-1) % nz;  // resolves to nz+kk for ng <= nz
+    // right(1) ghosts <- left(0) source cells
+    int ig1 = nx+ng+ii;
+    int jg1 = ny+ng+jj;
+    int kg1 = nz+ng+kk;
+    int is0 = ng + ii % nx;
+    int js0 = ng + jj % ny;
+    int ks0 = ng + kk % nz;
+
     // (0,0,0) <- (1,1,1)
-    //printf("(0,0,0) corner %d,%d,%d <- %d,%d,%d\n",
-    //                              ii,       jj,       kk,
-    //                           nx+ii,    ny+jj,    nz+kk
-    //);
-    *ivghost = ivoxel(      ii,       jj,       kk);
-    *ivghsrc = ivoxel(   nx+ii,    ny+jj,    nz+kk);
+    //printf("(0,0,0) corner %d,%d,%d <- %d,%d,%d\n", ig0,jg0,kg0, is1,js1,ks1);
+    *ivghost = ivoxel( ig0, jg0, kg0 );
+    *ivghsrc = ivoxel( is1, js1, ks1 );
     ++ivghost;
     ++ivghsrc;
     ++count;
 
     // (1,0,0) <- (0,1,1)
-    //printf("(1,0,0) corner %d,%d,%d <- %d,%d,%d\n",
-    //                        nx+ng+ii,       jj,       kk,
-    //                           ng+ii,    ny+jj,    nz+kk
-    //);
-    *ivghost = ivoxel(nx+ng+ii,       jj,       kk);
-    *ivghsrc = ivoxel(   ng+ii,    ny+jj,    nz+kk);
+    //printf("(1,0,0) corner %d,%d,%d <- %d,%d,%d\n", ig1,jg0,kg0, is0,js1,ks1);
+    *ivghost = ivoxel( ig1, jg0, kg0 );
+    *ivghsrc = ivoxel( is0, js1, ks1 );
     ++ivghost;
     ++ivghsrc;
     ++count;
 
     // (0,1,0) <- (1,0,1)
-    //printf("(0,1,0) corner %d,%d,%d <- %d,%d,%d\n",
-    //                              ii, ny+ng+jj,       kk,
-    //                           nx+ii,    ng+jj,    nz+kk
-    //);
-    *ivghost = ivoxel(      ii, ny+ng+jj,       kk);
-    *ivghsrc = ivoxel(   nx+ii,    ng+jj,    nz+kk);
+    //printf("(0,1,0) corner %d,%d,%d <- %d,%d,%d\n", ig0,jg1,kg0, is1,js0,ks1);
+    *ivghost = ivoxel( ig0, jg1, kg0 );
+    *ivghsrc = ivoxel( is1, js0, ks1 );
     ++ivghost;
     ++ivghsrc;
     ++count;
 
     // (1,1,0) <- (0,0,1)
-    //printf("(1,1,0) corner %d,%d,%d <- %d,%d,%d\n",
-    //                        nx+ng+ii, ny+ng+jj,       kk,
-    //                           ng+ii,    ng+jj,    nz+kk
-    //);
-    *ivghost = ivoxel(nx+ng+ii, ny+ng+jj,       kk);
-    *ivghsrc = ivoxel(   ng+ii,    ng+jj,    nz+kk);
+    //printf("(1,1,0) corner %d,%d,%d <- %d,%d,%d\n", ig1,jg1,kg0, is0,js0,ks1);
+    *ivghost = ivoxel( ig1, jg1, kg0 );
+    *ivghsrc = ivoxel( is0, js0, ks1 );
     ++ivghost;
     ++ivghsrc;
     ++count;
 
     // (0,0,1) <- (1,1,0)
-    //printf("(0,0,1) corner %d,%d,%d <- %d,%d,%d\n",
-    //                              ii,       jj, nz+ng+kk,
-    //                           nx+ii,    ny+jj,    ng+kk
-    //);
-    *ivghost = ivoxel(      ii,       jj, nz+ng+kk);
-    *ivghsrc = ivoxel(   nx+ii,    ny+jj,    ng+kk);
+    //printf("(0,0,1) corner %d,%d,%d <- %d,%d,%d\n", ig0,jg0,kg1, is1,js1,ks0);
+    *ivghost = ivoxel( ig0, jg0, kg1 );
+    *ivghsrc = ivoxel( is1, js1, ks0 );
     ++ivghost;
     ++ivghsrc;
     ++count;
 
     // (1,0,1) <- (0,1,0)
-    //printf("(1,0,1) corner %d,%d,%d <- %d,%d,%d\n",
-    //                        nx+ng+ii,       jj, nz+ng+kk,
-    //                           ng+ii,    ny+jj,    ng+kk
-    //);
-    *ivghost = ivoxel(nx+ng+ii,       jj, nz+ng+kk);
-    *ivghsrc = ivoxel(   ng+ii,    ny+jj,    ng+kk);
+    //printf("(1,0,1) corner %d,%d,%d <- %d,%d,%d\n", ig1,jg0,kg1, is0,js1,ks0);
+    *ivghost = ivoxel( ig1, jg0, kg1 );
+    *ivghsrc = ivoxel( is0, js1, ks0 );
     ++ivghost;
     ++ivghsrc;
     ++count;
 
     // (0,1,1) <- (1,0,0)
-    //printf("(0,1,1) corner %d,%d,%d <- %d,%d,%d\n",
-    //                              ii, ny+ng+jj, nz+ng+kk,
-    //                           nx+ii,    ng+jj,    ng+kk
-    //);
-    *ivghost = ivoxel(      ii, ny+ng+jj, nz+ng+kk);
-    *ivghsrc = ivoxel(   nx+ii,    ng+jj,    ng+kk);
+    //printf("(0,1,1) corner %d,%d,%d <- %d,%d,%d\n", ig0,jg1,kg1, is1,js0,ks0);
+    *ivghost = ivoxel( ig0, jg1, kg1 );
+    *ivghsrc = ivoxel( is1, js0, ks0 );
     ++ivghost;
     ++ivghsrc;
     ++count;
 
     // (1,1,1) <- (0,0,0)
-    //printf("(1,1,1) corner %d,%d,%d <- %d,%d,%d\n",
-    //                        nx+ng+ii, ny+ng+jj, nz+ng+kk,
-    //                           ng+ii,    ng+jj,    ng+kk
-    //);
-    *ivghost = ivoxel(nx+ng+ii, ny+ng+jj, nz+ng+kk);
-    *ivghsrc = ivoxel(   ng+ii,    ng+jj,    ng+kk);
+    //printf("(1,1,1) corner %d,%d,%d <- %d,%d,%d\n", ig1,jg1,kg1, is0,js0,ks0);
+    *ivghost = ivoxel( ig1, jg1, kg1 );
+    *ivghsrc = ivoxel( is0, js0, ks0 );
     ++ivghost;
     ++ivghsrc;
     ++count;
@@ -241,31 +244,39 @@ FieldArray::FieldArray(int nx_, int ny_, int nz_, int ng_,
   for (int kk=(    0); kk < (   ng); ++kk) {
   for (int jj=(    0); jj < (   ng); ++jj) {
   for (int ii=(   ng); ii < (nx+ng); ++ii) {
+
+    // left(0) ghosts <- right(1) source cells
+    int jg0 = jj;
+    int kg0 = kk;
+    int js1 = (ny+ng-1) - (ng-jj-1) % ny;  // resolves to ny+jj for ng <= ny
+    int ks1 = (nz+ng-1) - (ng-kk-1) % nz;  // resolves to nz+kk for ng <= nz
+    // right(1) ghosts <- left(0) source cells
+    int jg1 = ny+ng+jj;
+    int kg1 = nz+ng+kk;
+    int js0 = ng + jj % ny;
+    int ks0 = ng + kk % nz;
+
     // (x,0,0) <- (x,1,1)
-    //if (ii==ng) printf("x-aligned edge (%d,%d) <- (%d,%d)\n",jj,kk,ny+jj,nz+kk);
-    *ivghost = ivoxel(      ii,       jj,       kk);
-    *ivghsrc = ivoxel(      ii,    ny+jj,    nz+kk);
+    *ivghost = ivoxel(  ii, jg0, kg0 );
+    *ivghsrc = ivoxel(  ii, js1, ks1 );
     ++ivghost;
     ++ivghsrc;
     ++count;
     // (x,1,0) <- (x,0,1)
-    //if (ii==ng) printf("x-aligned edge (%d,%d) <- (%d,%d)\n",ny+ng+jj,kk,ng+jj,nz+kk);
-    *ivghost = ivoxel(      ii, ny+ng+jj,       kk);
-    *ivghsrc = ivoxel(      ii,    ng+jj,    nz+kk);
+    *ivghost = ivoxel(  ii, jg1, kg0 );
+    *ivghsrc = ivoxel(  ii, js0, ks1 );
     ++ivghost;
     ++ivghsrc;
     ++count;
     // (x,0,1) <- (x,1,0)
-    //if (ii==ng) printf("x-aligned edge (%d,%d) <- (%d,%d)\n",jj,nz+ng+kk,ny+jj,ng+kk);
-    *ivghost = ivoxel(      ii,       jj, nz+ng+kk);
-    *ivghsrc = ivoxel(      ii,    ny+jj,    ng+kk);
+    *ivghost = ivoxel(  ii, jg0, kg1 );
+    *ivghsrc = ivoxel(  ii, js1, ks0 );
     ++ivghost;
     ++ivghsrc;
     ++count;
     // (x,1,1) <- (x,0,0)
-    //if (ii==ng) printf("x-aligned edge (%d,%d) <- (%d,%d)\n",ny+ng+jj,nz+ng+kk,ng+jj,ng+kk);
-    *ivghost = ivoxel(      ii, ny+ng+jj, nz+ng+kk);
-    *ivghsrc = ivoxel(      ii,    ng+jj,    ng+kk);
+    *ivghost = ivoxel(  ii, jg1, kg1 );
+    *ivghsrc = ivoxel(  ii, js0, ks0 );
     ++ivghost;
     ++ivghsrc;
     ++count;
@@ -275,27 +286,39 @@ FieldArray::FieldArray(int nx_, int ny_, int nz_, int ng_,
   for (int kk=(    0); kk < (   ng); ++kk) {
   for (int jj=(   ng); jj < (ny+ng); ++jj) {
   for (int ii=(    0); ii < (   ng); ++ii) {
+
+    // left(0) ghosts <- right(1) source cells
+    int ig0 = ii;
+    int kg0 = kk;
+    int is1 = (nx+ng-1) - (ng-ii-1) % nx;  // resolves to nx+ii for ng <= nx
+    int ks1 = (nz+ng-1) - (ng-kk-1) % nz;  // resolves to nz+kk for ng <= nz
+    // right(1) ghosts <- left(0) source cells
+    int ig1 = nx+ng+ii;
+    int kg1 = nz+ng+kk;
+    int is0 = ng + ii % nx;
+    int ks0 = ng + kk % nz;
+
     // (0,y,0) <- (1,y,1)
-    *ivghost = ivoxel(      ii,       jj,       kk);
-    *ivghsrc = ivoxel(   nx+ii,       jj,    nz+kk);
+    *ivghost = ivoxel( ig0,  jj, kg0);
+    *ivghsrc = ivoxel( is1,  jj, ks1);
     ++ivghost;
     ++ivghsrc;
     ++count;
     // (1,y,0) <- (0,y,1)
-    *ivghost = ivoxel(nx+ng+ii,       jj,       kk);
-    *ivghsrc = ivoxel(   ng+ii,       jj,    nz+kk);
+    *ivghost = ivoxel( ig1,  jj, kg0);
+    *ivghsrc = ivoxel( is0,  jj, ks1);
     ++ivghost;
     ++ivghsrc;
     ++count;
     // (0,y,1) <- (1,y,0)
-    *ivghost = ivoxel(      ii,       jj, nz+ng+kk);
-    *ivghsrc = ivoxel(   nx+ii,       jj,    ng+kk);
+    *ivghost = ivoxel( ig0,  jj, kg1);
+    *ivghsrc = ivoxel( is1,  jj, ks0);
     ++ivghost;
     ++ivghsrc;
     ++count;
     // (1,y,1) <- (0,y,0)
-    *ivghost = ivoxel(nx+ng+ii,       jj, nz+ng+kk);
-    *ivghsrc = ivoxel(   ng+ii,       jj,    ng+kk);
+    *ivghost = ivoxel( ig1,  jj, kg1);
+    *ivghsrc = ivoxel( is0,  jj, ks0);
     ++ivghost;
     ++ivghsrc;
     ++count;
@@ -305,55 +328,94 @@ FieldArray::FieldArray(int nx_, int ny_, int nz_, int ng_,
   for (int kk=(   ng); kk < (nz+ng); ++kk) {
   for (int jj=(    0); jj < (   ng); ++jj) {
   for (int ii=(    0); ii < (   ng); ++ii) {
+
+    // left(0) ghosts <- right(1) source cells
+    int ig0 = ii;
+    int jg0 = jj;
+    int is1 = (nx+ng-1) - (ng-ii-1) % nx;  // resolves to nx+ii for ng <= nx
+    int js1 = (ny+ng-1) - (ng-jj-1) % ny;  // resolves to ny+jj for ng <= ny
+    // right(1) ghosts <- left(0) source cells
+    int ig1 = nx+ng+ii;
+    int jg1 = ny+ng+jj;
+    int is0 = ng + ii % nx;
+    int js0 = ng + jj % ny;
+
     // (0,0,z) <- (1,1,z)
-    *ivghost = ivoxel(      ii,       jj,       kk);
-    *ivghsrc = ivoxel(   nx+ii,    ny+jj,       kk);
+    *ivghost = ivoxel( ig0, jg0,  kk);
+    *ivghsrc = ivoxel( is1, js1,  kk);
     ++ivghost;
     ++ivghsrc;
     ++count;
     // (1,0,z) <- (0,1,z)
-    *ivghost = ivoxel(nx+ng+ii,       jj,       kk);
-    *ivghsrc = ivoxel(   ng+ii,    ny+jj,       kk);
+    *ivghost = ivoxel( ig1, jg0,  kk);
+    *ivghsrc = ivoxel( is0, js1,  kk);
     ++ivghost;
     ++ivghsrc;
     ++count;
     // (0,1,z) <- (1,0,z)
-    *ivghost = ivoxel(      ii, ny+ng+jj,       kk);
-    *ivghsrc = ivoxel(   nx+ii,    ng+jj,       kk);
+    *ivghost = ivoxel( ig0, jg1,  kk);
+    *ivghsrc = ivoxel( is1, js0,  kk);
     ++ivghost;
     ++ivghsrc;
     ++count;
     // (1,1,z) <- (0,0,z)
-    *ivghost = ivoxel(nx+ng+ii, ny+ng+jj,       kk);
-    *ivghsrc = ivoxel(   ng+ii,    ng+jj,       kk);
+    *ivghost = ivoxel( ig1, jg1,  kk);
+    *ivghsrc = ivoxel( is0, js0,  kk);
     ++ivghost;
     ++ivghsrc;
     ++count;
   }}}
 
-  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // all done counting cost, do some sanity checks
+  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // all done counting ghosts, do some sanity checks
+
+  // Need sorted ivoxels for some tests.
+  // DO NOT USE SORTED LISTS IN PRODUCTION CODE, because the relative order
+  // of ivoxels_ghost, ivoxels_ghsrc must be maintained.  --ATr,2024feb10
+  int* ivoxels_test_g = (int*) malloc(nvg*sizeof(int));
+  int* ivoxels_test_s = (int*) malloc(nvg*sizeof(int));
+  for (int ii =0; ii < count; ++ii) {
+    ivoxels_test_g[ii] = ivoxels_ghost[ii];
+    ivoxels_test_s[ii] = ivoxels_ghsrc[ii];
+  }
+  qsort(ivoxels_test_g, count, sizeof(int), compare_ints);
+  qsort(ivoxels_test_s, count, sizeof(int), compare_ints);
 
   printf("Field initialization: testing ghost count %d expected %d ghosts.\n", count, nvg);
   assert(count == nvg);
 
   printf("Field initialization: testing ghost linear voxel indices unique.\n");
-  // Make a sorted copy and looking for adjacent duplicates.
-  // DO NOT USE THE SORTED LIST IN PRODUCTION CODE, because the relative order
-  // of ivoxels_ghost, ivoxels_ghsrc must be maintained.  --ATr,2024feb10
-  int* ivoxels_test = (int*) malloc(nvg*sizeof(int));
-  for (int ii =0; ii < count; ++ii) {
-    ivoxels_test[ii] = ivoxels_ghost[ii];
-  }
-  qsort(ivoxels_test, count, sizeof(int), compare_ints);
-  //printf("linear voxel unsorted %d sorted %d\n", ivoxels_ghost[0], ivoxels_test[0]);
+  //printf("linear voxel unsorted %d sorted %d\n", ivoxels_ghost[0], ivoxels_test_g[0]);
   for (int ii = 1; ii < count; ++ii) {
-    //printf("linear voxel unsorted %d sorted %d\n", ivoxels_ghost[ii], ivoxels_test[ii]);
-    assert(ivoxels_test[ii-1] != ivoxels_test[ii]);
+    //printf("linear voxel unsorted %d sorted %d\n", ivoxels_ghost[ii], ivoxels_test_g[ii]);
+    assert(ivoxels_test_g[ii-1] != ivoxels_test_g[ii]);
   }
-  free(ivoxels_test);
+
+  // Useful test when any dimension < number of ghost cells, i.e.,
+  // min(nx,ny,nz) < ng so the ghost cells have to alias around
+  printf("Field initialization: testing ghosts only point to live cells.\n");
+  {
+    int iig = 0;
+    int iis = 0;
+    // Fail if any src voxels are also ghost voxels
+    // Simultaneous loop requires both lists to be sorted
+    while (iis < count) {
+      int ivg = ivoxels_test_g[iig];
+      int ivs = ivoxels_test_s[iis];
+      while (ivg < ivs && iig < count) {
+        // ghost iterator catches up to source when ivg >= ivs (note "=")
+        ++iig;
+        ivg = ivoxels_test_g[iig];
+      }
+      assert(ivs != ivg);
+      ++iis;
+    }
+  }
+
+  // Cleanup from testing
+  free(ivoxels_test_g);
+  free(ivoxels_test_s);
 
   printf("Field initialization: all tests passed.\n");
-  //assert(0);  // TODO while writing code
 
 }

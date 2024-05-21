@@ -23,10 +23,8 @@ void user_param(param_t* par) {
   par->Lx = (6.667/96);
   par->Ly = 6.667;
   par->Lz = 6.667;
-  par->nx = 1;      // TODO illegal to have nx,ny=1 with nghost=2,
-  par->ny = 96;     // I guess the ghost just keep stacking and get the "other" ghosts so it works
-                    //but not a good idea, should guard against this...
-                    //ALSO current deposit may be broken! -ATr,2024feb25
+  par->nx = 1;     // number of x cells in domain (not counting ghosts)
+  par->ny = 96;
   par->nz = 96;
   par->ng =  2;    // number of ghost cells
   par->seed = 1;   // zero-th particle gets teleported so useful test case
