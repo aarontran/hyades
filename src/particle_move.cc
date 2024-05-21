@@ -504,7 +504,7 @@ void ParticleArray::deposit(int unwind) {
   const float cdt_dz = fa->dt/fa->hz;
   // Deposit at particle streak midpoint,
   // or deposit at current particle position?
-  const float frac = (unwind == 1) ? 0.5 : 0;  // For QS scheme
+  const float frac = (unwind == 1) ? 0.5 : 0;
 
   for (int ip=0; ip<np; ++ip) {
 
@@ -516,7 +516,7 @@ void ParticleArray::deposit(int unwind) {
     float zmh = (p->z - frac*(p->uz)*cdt_dz);
 
 #ifdef SHAPE_QS
-    deposit_one_qs( xmh, ymh, zmh, p->ux, p->uy, p->uz, p->w );
+    deposit_one_qs ( xmh, ymh, zmh, p->ux, p->uy, p->uz, p->w );
 #endif
 #ifdef SHAPE_NGP
     deposit_one_ngp( xmh, ymh, zmh, p->ux, p->uy, p->uz, p->w );
@@ -649,8 +649,6 @@ inline void ParticleArray::deposit_one_cic(
   float wt  // charge*weight
 ) {
 
-  const static float one      = 1.;
-  const static float one_half = 1./2.;
   const static float qsp_rV   = qsp/(fa->hx*fa->hy*fa->hz);
 
   // Voxel indices nearest (below/left) of streak midpoint
@@ -732,7 +730,6 @@ inline void ParticleArray::deposit_one_tsc(
   float wt  // charge*weight
 ) {
 
-  const static float one      = 1.;
   const static float one_half = 1./2.;
   const static float two      = 2.;
   const static float qsp_rV   = qsp/(fa->hx*fa->hy*fa->hz);
