@@ -20,17 +20,17 @@ void ParticleArray::move() {
   const float one_third      = 1./3.;
   const float one_half       = 1./2.;
   const float two_fifteenths = 2./15.;
-  const float qdt_2mc = (qsp*fa.dt)/(2*msp);  // q*dt/(2*m*c) with c=1
-  const float cdt_dx  = fa.dt/fa.hx;          // c*dt/dx with c=1
-  const float cdt_dy  = fa.dt/fa.hy;
-  const float cdt_dz  = fa.dt/fa.hz;
+  const float qdt_2mc = (qsp*fa->dt)/(2*msp);  // q*dt/(2*m*c) with c=1
+  const float cdt_dx  = fa->dt/fa->hx;          // c*dt/dx with c=1
+  const float cdt_dy  = fa->dt/fa->hy;
+  const float cdt_dz  = fa->dt/fa->hz;
 
   // TODO HACKY HACK HACK!!!!!
 #ifdef SHAPE_CIC
-  const float fnx = fa.nx;
-  const float fny = fa.ny;
-  const float fnz = fa.nz;
-  const float fng = fa.ng;
+  const float fnx = fa->nx;
+  const float fny = fa->ny;
+  const float fnz = fa->nz;
+  const float fng = fa->ng;
   // Linear array increments
   const int ox = 1;
   const int oy = (fnx+2*fng);
@@ -88,14 +88,14 @@ void ParticleArray::move() {
     // First attempt
 
     // CIC = area weighting = trilinear interpolation
-//    field_t* f0   = fa.voxel( ix  , iy  , iz   );
-//    field_t* fz   = fa.voxel( ix  , iy  , iz+1 );
-//    field_t* fy   = fa.voxel( ix  , iy+1, iz   );
-//    field_t* fyz  = fa.voxel( ix  , iy+1, iz+1 );
-//    field_t* fx   = fa.voxel( ix+1, iy  , iz   );
-//    field_t* fxz  = fa.voxel( ix+1, iy  , iz+1 );
-//    field_t* fxy  = fa.voxel( ix+1, iy+1, iz   );
-//    field_t* fxyz = fa.voxel( ix+1, iy+1, iz+1 );
+//    field_t* f0   = fa->voxel( ix  , iy  , iz   );
+//    field_t* fz   = fa->voxel( ix  , iy  , iz+1 );
+//    field_t* fy   = fa->voxel( ix  , iy+1, iz   );
+//    field_t* fyz  = fa->voxel( ix  , iy+1, iz+1 );
+//    field_t* fx   = fa->voxel( ix+1, iy  , iz   );
+//    field_t* fxz  = fa->voxel( ix+1, iy  , iz+1 );
+//    field_t* fxy  = fa->voxel( ix+1, iy+1, iz   );
+//    field_t* fxyz = fa->voxel( ix+1, iy+1, iz+1 );
 //
 //    float hax = qdt_2mc * (
 //        (1.-dx)*(1.-dy)*(1.-dz) *   f0->ex
@@ -165,75 +165,75 @@ void ParticleArray::move() {
     // TENTATIVE RESULT: doesn't seem to matter more than few percent level...
     int il = ix + (fnx+2*fng)*(iy + (fny+2*fng)*iz);
 
-//    field_t* f0   = fa.voxel( ix  , iy  , iz   );
-//    field_t* fz   = fa.voxel( ix  , iy  , iz+1 );
-//    field_t* fy   = fa.voxel( ix  , iy+1, iz   );
-//    field_t* fyz  = fa.voxel( ix  , iy+1, iz+1 );
-//    field_t* fx   = fa.voxel( ix+1, iy  , iz   );
-//    field_t* fxz  = fa.voxel( ix+1, iy  , iz+1 );
-//    field_t* fxy  = fa.voxel( ix+1, iy+1, iz   );
-//    field_t* fxyz = fa.voxel( ix+1, iy+1, iz+1 );
+//    field_t* f0   = fa->voxel( ix  , iy  , iz   );
+//    field_t* fz   = fa->voxel( ix  , iy  , iz+1 );
+//    field_t* fy   = fa->voxel( ix  , iy+1, iz   );
+//    field_t* fyz  = fa->voxel( ix  , iy+1, iz+1 );
+//    field_t* fx   = fa->voxel( ix+1, iy  , iz   );
+//    field_t* fxz  = fa->voxel( ix+1, iy  , iz+1 );
+//    field_t* fxy  = fa->voxel( ix+1, iy+1, iz   );
+//    field_t* fxyz = fa->voxel( ix+1, iy+1, iz+1 );
 
     float hax = qdt_2mc * (
-        (1.-dx)*(1.-dy)*(1.-dz) * (fa.f0[ il          ]).ex
-      + (1.-dx)*(1.-dy)*    dz  * (fa.f0[ il      +oz ]).ex
-      + (1.-dx)*    dy *(1.-dz) * (fa.f0[ il   +oy    ]).ex
-      + (1.-dx)*    dy *    dz  * (fa.f0[ il   +oy+oz ]).ex
-      +     dx *(1.-dy)*(1.-dz) * (fa.f0[ il+ox       ]).ex
-      +     dx *(1.-dy)*    dz  * (fa.f0[ il+ox   +oz ]).ex
-      +     dx *    dy *(1.-dz) * (fa.f0[ il+ox+oy    ]).ex
-      +     dx *    dy *    dz  * (fa.f0[ il+ox+oy+oz ]).ex
+        (1.-dx)*(1.-dy)*(1.-dz) * (fa->f0[ il          ]).ex
+      + (1.-dx)*(1.-dy)*    dz  * (fa->f0[ il      +oz ]).ex
+      + (1.-dx)*    dy *(1.-dz) * (fa->f0[ il   +oy    ]).ex
+      + (1.-dx)*    dy *    dz  * (fa->f0[ il   +oy+oz ]).ex
+      +     dx *(1.-dy)*(1.-dz) * (fa->f0[ il+ox       ]).ex
+      +     dx *(1.-dy)*    dz  * (fa->f0[ il+ox   +oz ]).ex
+      +     dx *    dy *(1.-dz) * (fa->f0[ il+ox+oy    ]).ex
+      +     dx *    dy *    dz  * (fa->f0[ il+ox+oy+oz ]).ex
     );
     float hay = qdt_2mc * (
-        (1.-dx)*(1.-dy)*(1.-dz) * (fa.f0[ il          ]).ey
-      + (1.-dx)*(1.-dy)*    dz  * (fa.f0[ il      +oz ]).ey
-      + (1.-dx)*    dy *(1.-dz) * (fa.f0[ il   +oy    ]).ey
-      + (1.-dx)*    dy *    dz  * (fa.f0[ il   +oy+oz ]).ey
-      +     dx *(1.-dy)*(1.-dz) * (fa.f0[ il+ox       ]).ey
-      +     dx *(1.-dy)*    dz  * (fa.f0[ il+ox   +oz ]).ey
-      +     dx *    dy *(1.-dz) * (fa.f0[ il+ox+oy    ]).ey
-      +     dx *    dy *    dz  * (fa.f0[ il+ox+oy+oz ]).ey
+        (1.-dx)*(1.-dy)*(1.-dz) * (fa->f0[ il          ]).ey
+      + (1.-dx)*(1.-dy)*    dz  * (fa->f0[ il      +oz ]).ey
+      + (1.-dx)*    dy *(1.-dz) * (fa->f0[ il   +oy    ]).ey
+      + (1.-dx)*    dy *    dz  * (fa->f0[ il   +oy+oz ]).ey
+      +     dx *(1.-dy)*(1.-dz) * (fa->f0[ il+ox       ]).ey
+      +     dx *(1.-dy)*    dz  * (fa->f0[ il+ox   +oz ]).ey
+      +     dx *    dy *(1.-dz) * (fa->f0[ il+ox+oy    ]).ey
+      +     dx *    dy *    dz  * (fa->f0[ il+ox+oy+oz ]).ey
     );
     float haz = qdt_2mc * (
-        (1.-dx)*(1.-dy)*(1.-dz) * (fa.f0[ il          ]).ez
-      + (1.-dx)*(1.-dy)*    dz  * (fa.f0[ il      +oz ]).ez
-      + (1.-dx)*    dy *(1.-dz) * (fa.f0[ il   +oy    ]).ez
-      + (1.-dx)*    dy *    dz  * (fa.f0[ il   +oy+oz ]).ez
-      +     dx *(1.-dy)*(1.-dz) * (fa.f0[ il+ox       ]).ez
-      +     dx *(1.-dy)*    dz  * (fa.f0[ il+ox   +oz ]).ez
-      +     dx *    dy *(1.-dz) * (fa.f0[ il+ox+oy    ]).ez
-      +     dx *    dy *    dz  * (fa.f0[ il+ox+oy+oz ]).ez
+        (1.-dx)*(1.-dy)*(1.-dz) * (fa->f0[ il          ]).ez
+      + (1.-dx)*(1.-dy)*    dz  * (fa->f0[ il      +oz ]).ez
+      + (1.-dx)*    dy *(1.-dz) * (fa->f0[ il   +oy    ]).ez
+      + (1.-dx)*    dy *    dz  * (fa->f0[ il   +oy+oz ]).ez
+      +     dx *(1.-dy)*(1.-dz) * (fa->f0[ il+ox       ]).ez
+      +     dx *(1.-dy)*    dz  * (fa->f0[ il+ox   +oz ]).ez
+      +     dx *    dy *(1.-dz) * (fa->f0[ il+ox+oy    ]).ez
+      +     dx *    dy *    dz  * (fa->f0[ il+ox+oy+oz ]).ez
     );
 
     float cbx = (
-        (1.-dx)*(1.-dy)*(1.-dz) * (fa.f0[ il          ]).bx
-      + (1.-dx)*(1.-dy)*    dz  * (fa.f0[ il      +oz ]).bx
-      + (1.-dx)*    dy *(1.-dz) * (fa.f0[ il   +oy    ]).bx
-      + (1.-dx)*    dy *    dz  * (fa.f0[ il   +oy+oz ]).bx
-      +     dx *(1.-dy)*(1.-dz) * (fa.f0[ il+ox       ]).bx
-      +     dx *(1.-dy)*    dz  * (fa.f0[ il+ox   +oz ]).bx
-      +     dx *    dy *(1.-dz) * (fa.f0[ il+ox+oy    ]).bx
-      +     dx *    dy *    dz  * (fa.f0[ il+ox+oy+oz ]).bx
+        (1.-dx)*(1.-dy)*(1.-dz) * (fa->f0[ il          ]).bx
+      + (1.-dx)*(1.-dy)*    dz  * (fa->f0[ il      +oz ]).bx
+      + (1.-dx)*    dy *(1.-dz) * (fa->f0[ il   +oy    ]).bx
+      + (1.-dx)*    dy *    dz  * (fa->f0[ il   +oy+oz ]).bx
+      +     dx *(1.-dy)*(1.-dz) * (fa->f0[ il+ox       ]).bx
+      +     dx *(1.-dy)*    dz  * (fa->f0[ il+ox   +oz ]).bx
+      +     dx *    dy *(1.-dz) * (fa->f0[ il+ox+oy    ]).bx
+      +     dx *    dy *    dz  * (fa->f0[ il+ox+oy+oz ]).bx
     );
     float cby = (
-        (1.-dx)*(1.-dy)*(1.-dz) * (fa.f0[ il          ]).by
-      + (1.-dx)*(1.-dy)*    dz  * (fa.f0[ il      +oz ]).by
-      + (1.-dx)*    dy *(1.-dz) * (fa.f0[ il   +oy    ]).by
-      + (1.-dx)*    dy *    dz  * (fa.f0[ il   +oy+oz ]).by
-      +     dx *(1.-dy)*(1.-dz) * (fa.f0[ il+ox       ]).by
-      +     dx *(1.-dy)*    dz  * (fa.f0[ il+ox   +oz ]).by
-      +     dx *    dy *(1.-dz) * (fa.f0[ il+ox+oy    ]).by
-      +     dx *    dy *    dz  * (fa.f0[ il+ox+oy+oz ]).by
+        (1.-dx)*(1.-dy)*(1.-dz) * (fa->f0[ il          ]).by
+      + (1.-dx)*(1.-dy)*    dz  * (fa->f0[ il      +oz ]).by
+      + (1.-dx)*    dy *(1.-dz) * (fa->f0[ il   +oy    ]).by
+      + (1.-dx)*    dy *    dz  * (fa->f0[ il   +oy+oz ]).by
+      +     dx *(1.-dy)*(1.-dz) * (fa->f0[ il+ox       ]).by
+      +     dx *(1.-dy)*    dz  * (fa->f0[ il+ox   +oz ]).by
+      +     dx *    dy *(1.-dz) * (fa->f0[ il+ox+oy    ]).by
+      +     dx *    dy *    dz  * (fa->f0[ il+ox+oy+oz ]).by
     );
     float cbz = (
-        (1.-dx)*(1.-dy)*(1.-dz) * (fa.f0[ il          ]).bz
-      + (1.-dx)*(1.-dy)*    dz  * (fa.f0[ il      +oz ]).bz
-      + (1.-dx)*    dy *(1.-dz) * (fa.f0[ il   +oy    ]).bz
-      + (1.-dx)*    dy *    dz  * (fa.f0[ il   +oy+oz ]).bz
-      +     dx *(1.-dy)*(1.-dz) * (fa.f0[ il+ox       ]).bz
-      +     dx *(1.-dy)*    dz  * (fa.f0[ il+ox   +oz ]).bz
-      +     dx *    dy *(1.-dz) * (fa.f0[ il+ox+oy    ]).bz
-      +     dx *    dy *    dz  * (fa.f0[ il+ox+oy+oz ]).bz
+        (1.-dx)*(1.-dy)*(1.-dz) * (fa->f0[ il          ]).bz
+      + (1.-dx)*(1.-dy)*    dz  * (fa->f0[ il      +oz ]).bz
+      + (1.-dx)*    dy *(1.-dz) * (fa->f0[ il   +oy    ]).bz
+      + (1.-dx)*    dy *    dz  * (fa->f0[ il   +oy+oz ]).bz
+      +     dx *(1.-dy)*(1.-dz) * (fa->f0[ il+ox       ]).bz
+      +     dx *(1.-dy)*    dz  * (fa->f0[ il+ox   +oz ]).bz
+      +     dx *    dy *(1.-dz) * (fa->f0[ il+ox+oy    ]).bz
+      +     dx *    dy *    dz  * (fa->f0[ il+ox+oy+oz ]).bz
     );
 
     ///////////////////
@@ -287,7 +287,7 @@ void ParticleArray::move() {
     for (int ii=-1; ii<=1; ++ii) {
     for (int jj=-1; jj<=1; ++jj) {
     for (int kk=-1; kk<=1; ++kk) {
-      field_t* fv = fa.voxel( ix+ii, iy+jj, iz+kk );
+      field_t* fv = fa->voxel( ix+ii, iy+jj, iz+kk );
       float w3 = wxs[ii+1] * wys[jj+1] * wzs[kk+1];
       hax += w3 * fv->ex;
       hay += w3 * fv->ey;
@@ -377,8 +377,8 @@ void ParticleArray::move_uncenter() {
   const float one_third      = 1./3.;
   const float one_half       = 1./2.;
   const float two_fifteenths = 2./15.;
-  const float qdt_2mc = -1 * (qsp*fa.dt)/(2*msp); // -1*q*dt/(2*m*c) with c=1
-  const float qdt_4mc = -1 * (qsp*fa.dt)/(4*msp); // -1*q*dt/(4*m*c) with c=1
+  const float qdt_2mc = -1 * (qsp*fa->dt)/(2*msp); // -1*q*dt/(2*m*c) with c=1
+  const float qdt_4mc = -1 * (qsp*fa->dt)/(4*msp); // -1*q*dt/(4*m*c) with c=1
 
   // Note: some arithmetic ops are NOT optimized; beware compiler re-ordering
   // of math b/c you may lose precision.
@@ -499,9 +499,9 @@ void ParticleArray::move_uncenter() {
 
 void ParticleArray::deposit(int unwind) {
 
-  const float cdt_dx = fa.dt/fa.hx;  // implicit c=1 in c*dt/dx
-  const float cdt_dy = fa.dt/fa.hy;
-  const float cdt_dz = fa.dt/fa.hz;
+  const float cdt_dx = fa->dt/fa->hx;  // implicit c=1 in c*dt/dx
+  const float cdt_dy = fa->dt/fa->hy;
+  const float cdt_dz = fa->dt/fa->hz;
   // Deposit at particle streak midpoint,
   // or deposit at current particle position?
   const float frac = (unwind == 1) ? 0.5 : 0;  // For QS scheme
@@ -550,7 +550,7 @@ inline void ParticleArray::deposit_one_qs(
   const static float two       = 2.;
   const static float three     = 3.;
   const static float one_half  = 1./2.;
-  const static float qsp_rV_12 = qsp/(12*fa.hx*fa.hy*fa.hz);
+  const static float qsp_rV_12 = qsp/(12*fa->hx*fa->hy*fa->hz);
 
   // Voxel indices
   int ix = (int)(xx + one_half);  // particles use cell-centered coordinates
@@ -574,13 +574,13 @@ inline void ParticleArray::deposit_one_qs(
   float wmy = qw*( v1 - one )*( v1 - one );
   float wmz = qw*( v2 - one )*( v2 - one );
 
-  field_t* f0  = fa.voxel(ix,  iy,  iz  );
-  field_t* fx  = fa.voxel(ix+1,iy,  iz  );
-  field_t* fy  = fa.voxel(ix,  iy+1,iz  );
-  field_t* fz  = fa.voxel(ix,  iy,  iz+1);
-  field_t* fmx = fa.voxel(ix-1,iy,  iz  );
-  field_t* fmy = fa.voxel(ix,  iy-1,iz  );
-  field_t* fmz = fa.voxel(ix,  iy,  iz-1);
+  field_t* f0  = fa->voxel(ix,  iy,  iz  );
+  field_t* fx  = fa->voxel(ix+1,iy,  iz  );
+  field_t* fy  = fa->voxel(ix,  iy+1,iz  );
+  field_t* fz  = fa->voxel(ix,  iy,  iz+1);
+  field_t* fmx = fa->voxel(ix-1,iy,  iz  );
+  field_t* fmy = fa->voxel(ix,  iy-1,iz  );
+  field_t* fmz = fa->voxel(ix,  iy,  iz-1);
 
    f0->jfx +=  w0*ux;
    fx->jfx +=  wx*ux;
@@ -624,7 +624,7 @@ inline void ParticleArray::deposit_one_ngp(
 ) {
 
   const static float one_half = 1./2.;
-  const static float qsp_rV   = qsp/(fa.hx*fa.hy*fa.hz);
+  const static float qsp_rV   = qsp/(fa->hx*fa->hy*fa->hz);
 
   // Voxel indices
   int ix = (int)(xx + one_half);  // particles use cell-centered coordinates
@@ -634,7 +634,7 @@ inline void ParticleArray::deposit_one_ngp(
   // Combined (charge x particle weight x inverse cell size) factor
   float w0 = wt * qsp_rV;
 
-  field_t* f0 = fa.voxel(ix,iy,iz);
+  field_t* f0 = fa->voxel(ix,iy,iz);
   f0->jfx  += w0 * ux;
   f0->jfy  += w0 * uy;
   f0->jfz  += w0 * uz;
@@ -651,7 +651,7 @@ inline void ParticleArray::deposit_one_cic(
 
   const static float one      = 1.;
   const static float one_half = 1./2.;
-  const static float qsp_rV   = qsp/(fa.hx*fa.hy*fa.hz);
+  const static float qsp_rV   = qsp/(fa->hx*fa->hy*fa->hz);
 
   // Voxel indices nearest (below/left) of streak midpoint
   int ix = (int)(xx);  // particles use cell-centered coordinates
@@ -664,14 +664,14 @@ inline void ParticleArray::deposit_one_cic(
   float dz = zz - iz;
 
   // CIC = area weighting = trilinear interpolation
-  field_t* f0   = fa.voxel( ix  , iy  , iz   );
-  field_t* fz   = fa.voxel( ix  , iy  , iz+1 );
-  field_t* fy   = fa.voxel( ix  , iy+1, iz   );
-  field_t* fyz  = fa.voxel( ix  , iy+1, iz+1 );
-  field_t* fx   = fa.voxel( ix+1, iy  , iz   );
-  field_t* fxz  = fa.voxel( ix+1, iy  , iz+1 );
-  field_t* fxy  = fa.voxel( ix+1, iy+1, iz   );
-  field_t* fxyz = fa.voxel( ix+1, iy+1, iz+1 );
+  field_t* f0   = fa->voxel( ix  , iy  , iz   );
+  field_t* fz   = fa->voxel( ix  , iy  , iz+1 );
+  field_t* fy   = fa->voxel( ix  , iy+1, iz   );
+  field_t* fyz  = fa->voxel( ix  , iy+1, iz+1 );
+  field_t* fx   = fa->voxel( ix+1, iy  , iz   );
+  field_t* fxz  = fa->voxel( ix+1, iy  , iz+1 );
+  field_t* fxy  = fa->voxel( ix+1, iy+1, iz   );
+  field_t* fxyz = fa->voxel( ix+1, iy+1, iz+1 );
   // No interpolation is actually required...
   // what I could do with interp array is have each voxel store its
   // 7 neighbor values?
@@ -735,7 +735,7 @@ inline void ParticleArray::deposit_one_tsc(
   const static float one      = 1.;
   const static float one_half = 1./2.;
   const static float two      = 2.;
-  const static float qsp_rV   = qsp/(fa.hx*fa.hy*fa.hz);
+  const static float qsp_rV   = qsp/(fa->hx*fa->hy*fa->hz);
 
   // Midpoint voxel offsets on interval [-1,1]
 
@@ -769,7 +769,7 @@ inline void ParticleArray::deposit_one_tsc(
   for (int ii=-1; ii<=1; ++ii) {
   for (int jj=-1; jj<=1; ++jj) {
   for (int kk=-1; kk<=1; ++kk) {
-    field_t* fv = fa.voxel( ix+ii, iy+jj, iz+kk );
+    field_t* fv = fa->voxel( ix+ii, iy+jj, iz+kk );
     float w3 = qw * wxs[ii+1] * wys[jj+1] * wzs[kk+1];
     fv-> jfx += w3 * ux;
     fv-> jfy += w3 * uy;
@@ -788,10 +788,10 @@ void ParticleArray::boundary_teleport() {
 
   // Try to be consistent about usage of >= versus > etc...
   // but maybe moot given vagaries of floating point...
-  const float ng = fa.ng;
-  const float nx = fa.nx;
-  const float ny = fa.ny;
-  const float nz = fa.nz;
+  const float ng = fa->ng;
+  const float nx = fa->nx;
+  const float ny = fa->ny;
+  const float nz = fa->nz;
 
   // grid boundaries at cell left/right edges
   // for nx=10, ng=2, the valid domain is
@@ -805,15 +805,16 @@ void ParticleArray::boundary_teleport() {
   const float z0 =    ng-0.5;
   const float z1 = nz+ng-0.5;
 
+  // Periodic boundary conditions
 #pragma omp parallel for
   for (int ip=0; ip<np; ++ip) {
     particle_t* p = &(p0[ip]);
-    if (p->x <  x0) { p->x += nx; };
-    if (p->x >= x1) { p->x -= nx; };
-    if (p->y <  y0) { p->y += ny; };
-    if (p->y >= y1) { p->y -= ny; };
-    if (p->z <  z0) { p->z += nz; };
-    if (p->z >= z1) { p->z -= nz; };
+    if (fa->particle_bc_x == 0 && p->x <  x0) { p->x += nx; };
+    if (fa->particle_bc_x == 0 && p->x >= x1) { p->x -= nx; };
+    if (fa->particle_bc_y == 0 && p->y <  y0) { p->y += ny; };
+    if (fa->particle_bc_y == 0 && p->y >= y1) { p->y -= ny; };
+    if (fa->particle_bc_z == 0 && p->z <  z0) { p->z += nz; };
+    if (fa->particle_bc_z == 0 && p->z >= z1) { p->z -= nz; };
   }  // end particle teleport loop
 
 } // end ParticleArray::boundary_teleport()

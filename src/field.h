@@ -57,6 +57,21 @@ class FieldArray {
     int* ivoxels_ghost;  // linear voxel indices for all ghost cells
     int* ivoxels_ghsrc;  // linear voxel indices for all ghosts' paired "source" cells
 
+    // Specify x/y/z domain boundaries for particles
+    //  0 = periodic
+    //  1 = reflecting
+    // for now, cannot set left/right boundaries separately, and B/Cs can only
+    // be applied at domain edges
+    int particle_bc_x;
+    int particle_bc_y;
+    int particle_bc_z;
+    // Specify x/y/z domain boundaries for fields
+    //  0 = periodic
+    //  1 = all E-field components set to zero
+    int field_bc_x;
+    int field_bc_y;
+    int field_bc_z;
+
     // --------------------------------------------------
     // Low-level methods to iterate over and get/set field values at single
     // voxels, not distinguishing live/ghost cells.

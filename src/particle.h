@@ -25,7 +25,7 @@ typedef struct particle {
 class ParticleArray {
 
   public:
-    ParticleArray(float qsp_, float msp_, int npmax_, FieldArray fa_,
+    ParticleArray(float qsp_, float msp_, int npmax_, FieldArray* fa_,
                   InterpArray ia_, Random rng_);
 
     float qsp;  // charge
@@ -66,7 +66,7 @@ class ParticleArray {
     void hputi(hid_t file_id, const char* attr_name, int stride);
 
   private:
-    FieldArray   fa;
+    FieldArray*  fa;
     InterpArray  ia;
     Random      rng;
 

@@ -29,6 +29,14 @@ FieldArray::FieldArray(int nx_, int ny_, int nz_, int ng_,
   hz = hz_;
   dt = dt_;
 
+  // default boundary condition is periodic unless user overrides
+  particle_bc_x = 0;
+  particle_bc_y = 0;
+  particle_bc_z = 0;
+  field_bc_x = 0;
+  field_bc_y = 0;
+  field_bc_z = 0;
+
   // assumes float = 4 bytes, not performance portable but it's such a common
   // standard that I think this check is worthwhile
   assert(sizeof(field_t) == 4*nfstruct);

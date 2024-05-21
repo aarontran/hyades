@@ -17,7 +17,7 @@
 // Otherwise C++ tries to call a default constructor which I haven't
 // provided...
 // https://stackoverflow.com/q/31488756
-ParticleArray::ParticleArray(float qsp_, float msp_, int npmax_, FieldArray fa_,
+ParticleArray::ParticleArray(float qsp_, float msp_, int npmax_, FieldArray* fa_,
                              InterpArray ia_, Random rng_
 ):
   qsp(qsp_), msp(msp_), npmax(npmax_), fa(fa_), ia(ia_), rng(rng_)
@@ -110,9 +110,9 @@ void ParticleArray::uniform(int i0, int i1, float x0, float x1, float y0,
     p->y = y0 + (y1-y0)*rng.drand();
     p->z = z0 + (z1-z0)*rng.drand();
     // convert to cell-centered grid coordinates
-    p->x = (p->x)/fa.hx + fa.ng - 0.5;
-    p->y = (p->y)/fa.hy + fa.ng - 0.5;
-    p->z = (p->z)/fa.hz + fa.ng - 0.5;
+    p->x = (p->x)/fa->hx + fa->ng - 0.5;
+    p->y = (p->y)/fa->hy + fa->ng - 0.5;
+    p->z = (p->z)/fa->hz + fa->ng - 0.5;
     ++p;
   }
 }

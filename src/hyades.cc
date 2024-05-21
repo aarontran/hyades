@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
                                   par.dt);
   InterpArray     ia = InterpArray(fa);
   Random         rng = Random(par.seed);
-  ParticleArray ions = ParticleArray(1, 1, par.npmax, fa, ia, rng);
+  ParticleArray ions = ParticleArray(1, 1, par.npmax, &fa, ia, rng);
 
   user_initialize(&fa, &ions, &par);
 
