@@ -147,13 +147,13 @@ int main(int argc, char* argv[]) {
     ions.move();                    // r,v advanced on ghosts
     clock.toc("move");
 
+    clock.tic("bdry");
+    ions.boundary_teleport();     // r,v advanced to final position
+    clock.toc("bdry");
+
     clock.tic("dep");
     ions.deposit(1);                // j   advanced on ghosts
     clock.toc("dep");
-
-    clock.tic("bdry");
-    ions.boundary_teleport();       // r,v advanced
-    clock.toc("bdry");
 
     clock.tic("depgh");
     fa.ghost_deposit_jrho();

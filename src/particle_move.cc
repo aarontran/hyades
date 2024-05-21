@@ -783,6 +783,10 @@ inline void ParticleArray::deposit_one_tsc(
 // =====================================
 void ParticleArray::boundary_teleport() {
 
+  const float cdt_dx = fa->dt/fa->hx;  // implicit c=1 in c*dt/dx
+  const float cdt_dy = fa->dt/fa->hy;
+  const float cdt_dz = fa->dt/fa->hz;
+
   // Try to be consistent about usage of >= versus > etc...
   // but maybe moot given vagaries of floating point...
   const float ng = fa->ng;
@@ -813,5 +817,111 @@ void ParticleArray::boundary_teleport() {
     if (fa->particle_bc_z == 0 && p->z <  z0) { p->z += nz; };
     if (fa->particle_bc_z == 0 && p->z >= z1) { p->z -= nz; };
   }  // end particle teleport loop
+
+  // Reflecting boundary conditions
+  // apply AFTER any periodic teleporting for other coordinates
+
+  // Problem: TRICKY BUSINESS with particles in corners when TWO reflecting
+  // B/Cs are at play... this is where VPIC's streak/boundary tracking logic
+  // will properly deal with everything, e.g. if a particle suffers two
+  // reflections during a single streak...
+
+  const float xwall0 = x0 + 1;  // TODO still experimenting with wall position -ATr,2024may20
+  const float xwall1 = x1 - 1;
+  //assert(nx > 3);  // doesnt make sense otherwise...
+
+  for (int ip=0; ip<np; ++ip) {
+    particle_t* p = &(p0[ip]);
+    if (fa->particle_bc_x == 1 && (p->x < xwall0 || p->x > xwall1)) {
+
+      float xw;
+      if (p->x < xwall0) xw = xwall0;
+      if (p->x > xwall1) xw = xwall1;
+
+      // Unwind particle streak to starting point
+      float xx = p->x - (p->ux)*cdt_dx;
+      float yy = p->y - (p->uy)*cdt_dy;
+      float zz = p->z - (p->uz)*cdt_dz;
+
+      //printf("reflect ind %d xyz %.6f %.6f %.6f uxyz % .6f % .6f % .6f . . . xw %.6f curstreak %.6f %.6f %.6f unwind 0\n",
+      //    p->ind, p->x,p->y,p->z, p->ux,p->uy,p->uz, xw, xx,yy,zz);
+
+      // Where did the collision happen during streak?
+      float frac = (xw - xx) / (p->ux * cdt_dx);
+      if (frac <= 0) frac = 1e-10;  // TODO hardcoded
+      if (frac > 1)  frac = 1;
+
+      // Deposit pre-collision streak up to the wall
+      xx += 0.5*frac * (p->ux)*cdt_dx;
+      yy += 0.5*frac * (p->uy)*cdt_dy;
+      zz += 0.5*frac * (p->uz)*cdt_dz;
+
+      //printf("reflect ind %d xyz %.6f %.6f %.6f uxyz % .6f % .6f % .6f . . . xw %.6f curstreak %.6f %.6f %.6f rewind prewall\n",
+      //    p->ind, p->x,p->y,p->z, p->ux,p->uy,p->uz, xw, xx,yy,zz);
+
+#ifdef SHAPE_QS
+    deposit_one_qs ( xx, yy, zz, p->ux, p->uy, p->uz, frac*p->w );
+#endif
+#ifdef SHAPE_NGP
+    deposit_one_ngp( xx, yy, zz, p->ux, p->uy, p->uz, frac*p->w );
+#endif
+#ifdef SHAPE_CIC
+    deposit_one_cic( xx, yy, zz, p->ux, p->uy, p->uz, frac*p->w );
+#endif
+#ifdef SHAPE_TSC
+    deposit_one_tsc( xx, yy, zz, p->ux, p->uy, p->uz, frac*p->w );
+#endif
+
+      // Collision position
+      xx += 0.5*frac * (p->ux)*cdt_dx;
+      yy += 0.5*frac * (p->uy)*cdt_dy;
+      zz += 0.5*frac * (p->uz)*cdt_dz;
+
+      //printf("reflect ind %d xyz %.6f %.6f %.6f uxyz % .6f % .6f % .6f . . . xw %.6f curstreak %.6f %.6f %.6f rewind wall\n",
+      //    p->ind, p->x,p->y,p->z, p->ux,p->uy,p->uz, xw, xx,yy,zz);
+
+      // Reflect off the wall
+      p->ux *= -1;
+
+      // Both the "negative" behind-wall streak midpoint, and the final
+      // reflected particle streak midpoint in regular deposit, can lie behind
+      // the wall.  We need to worry about charge/current conservation...
+      // TODO figure out what's the right conservative scheme. -ATr,2024may21
+
+      // Deposit "negative" streak behind wall to cancel out the regular
+      // deposit, similar to how we treated the "pre-wall" streak
+      xx -= 0.5*frac * (p->ux)*cdt_dx;
+      yy -= 0.5*frac * (p->uy)*cdt_dy;
+      zz -= 0.5*frac * (p->uz)*cdt_dz;
+
+      //printf("reflect ind %d xyz %.6f %.6f %.6f uxyz % .6f % .6f % .6f . . . xw %.6f curstreak %.6f %.6f %.6f rewind behind wall\n",
+      //    p->ind, p->x,p->y,p->z, p->ux,p->uy,p->uz, xw, xx,yy,zz);
+
+#ifdef SHAPE_QS
+    deposit_one_qs ( xx, yy, zz, p->ux, p->uy, p->uz, -1*frac*p->w );
+#endif
+#ifdef SHAPE_NGP
+    deposit_one_ngp( xx, yy, zz, p->ux, p->uy, p->uz, -1*frac*p->w );
+#endif
+#ifdef SHAPE_CIC
+    deposit_one_cic( xx, yy, zz, p->ux, p->uy, p->uz, -1*frac*p->w );
+#endif
+#ifdef SHAPE_TSC
+    deposit_one_tsc( xx, yy, zz, p->ux, p->uy, p->uz, -1*frac*p->w );
+#endif
+
+      // Move particle to final position
+      xx += (1-0.5*frac) * (p->ux)*cdt_dx;
+      yy += (1-0.5*frac) * (p->uy)*cdt_dy;
+      zz += (1-0.5*frac) * (p->uz)*cdt_dz;
+      p->x = xx;
+      p->y = yy;
+      p->z = zz;
+
+      //printf("reflect ind %d xyz %.6f %.6f %.6f uxyz % .6f % .6f % .6f . . . xw %.6f curstreak %.6f %.6f %.6f rewind done\n",
+      //    p->ind, p->x,p->y,p->z, p->ux,p->uy,p->uz, xw, xx,yy,zz);
+
+    } // if (fa->particle_bc_x == 1 && (...))
+  } //for (int ip=0; ...)
 
 } // end ParticleArray::boundary_teleport()

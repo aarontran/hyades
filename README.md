@@ -16,7 +16,8 @@ __Hyades is under construction and may have bugs.  It has been tested and shown
 to work on one case (1D proton cyclotron anisotropy instability problem).__
 
 Compared to Hybrid-VPIC,
-* Hyades supports _only_ periodic boundary conditions.
+* Hyades mainly supports periodic boundary conditions; reflecting boundaries
+  are in work.
 * Hyades uses >=2 ghost cells on all coordinate axes.
 * Hyades is not MPI parallelized.
 
