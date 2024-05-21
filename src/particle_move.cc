@@ -497,341 +497,288 @@ void ParticleArray::move_uncenter() {
 // can be easily vectorized; the deposit is hard to vectorize without
 // the accumulator arrays or careful OpenMP threading...
 
+void ParticleArray::deposit(int unwind) {
+
+  const float cdt_dx = fa.dt/fa.hx;  // implicit c=1 in c*dt/dx
+  const float cdt_dy = fa.dt/fa.hy;
+  const float cdt_dz = fa.dt/fa.hz;
+  // Deposit at particle streak midpoint,
+  // or deposit at current particle position?
+  const float frac = (unwind == 1) ? 0.5 : 0;  // For QS scheme
+
+  for (int ip=0; ip<np; ++ip) {
+
+    particle_t* p = &(p0[ip]);
+
+    // Unwind to get streak midpoint, so deposit at t=n+1/2 (not t=n+1 !!)
+    float xmh = (p->x - frac*(p->ux)*cdt_dx);  // xmh = x minus half step
+    float ymh = (p->y - frac*(p->uy)*cdt_dy);
+    float zmh = (p->z - frac*(p->uz)*cdt_dz);
+
 #ifdef SHAPE_QS
-void ParticleArray::deposit(int unwind) {
-
-  const float one            = 1.;
-  const float two            = 2.;
-  const float three          = 3.;
-  const float one_half       = 1./2.;
-
-  const float cdt_dx         = fa.dt/fa.hx;  // implicit c=1 in c*dt/dx
-  const float cdt_dy         = fa.dt/fa.hy;
-  const float cdt_dz         = fa.dt/fa.hz;
-
-  const float qsp_rV_12 = qsp/(12*fa.hx*fa.hy*fa.hz);
-
-  // Deposit at particle streak midpoint,
-  // or deposit at current particle position?
-  const float frac = (unwind == 1) ? one_half : 0;
-
-  for (int ip=0; ip<np; ++ip) {
-
-    particle_t* p = &(p0[ip]);
-
-    // Unwind to get streak midpoint
-    float xmh = (p->x - frac*(p->ux)*cdt_dx);  // xmh = x minus half step
-    float ymh = (p->y - frac*(p->uy)*cdt_dy);
-    float zmh = (p->z - frac*(p->uz)*cdt_dz);
-
-    // Midpoint voxel indices
-    int ix = (int)(xmh + one_half);  // particles use cell-centered coordinates
-    int iy = (int)(ymh + one_half);
-    int iz = (int)(zmh + one_half);
-    // Midpoint voxel offsets on interval [-1,1]
-    float v0 = two*(xmh - ix);
-    float v1 = two*(ymh - iy);
-    float v2 = two*(zmh - iz);
-
-    // Combined (charge x particle weight x inverse cell size) factor
-    // for deposit
-    float qw = p->w * qsp_rV_12;
-
-    // Ari's quadratic spline deposit scheme
-    // weights sum to 1, without the factor of q
-    float w0 =  qw*two*( three - v0*v0 - v1*v1 - v2*v2 );
-    float wx =  qw*( v0 + one )*( v0 + one );
-    float wy =  qw*( v1 + one )*( v1 + one );
-    float wz =  qw*( v2 + one )*( v2 + one );
-    float wmx = qw*( v0 - one )*( v0 - one );
-    float wmy = qw*( v1 - one )*( v1 - one );
-    float wmz = qw*( v2 - one )*( v2 - one );
-
-    //if (ip == 0) {
-    //  printf("depst ind %d xmh %.3f %.3f %.3f uxyz % .3f % .3f % .3f . . . ixmh %d %d %d v012 % .3f % .3f % .3f shape %f %f %f %f %f %f %f\n",
-    //      p->ind, xmh,ymh,zmh, p->ux,p->uy,p->uz,
-    //      ix,iy,iz, v0,v1,v2,
-    //      w0, wx, wy, wz, wmx, wmy, wmz
-    //  );
-    //}
-
-    field_t* f0  = fa.voxel(ix,  iy,  iz  );
-    field_t* fx  = fa.voxel(ix+1,iy,  iz  );
-    field_t* fy  = fa.voxel(ix,  iy+1,iz  );
-    field_t* fz  = fa.voxel(ix,  iy,  iz+1);
-    field_t* fmx = fa.voxel(ix-1,iy,  iz  );
-    field_t* fmy = fa.voxel(ix,  iy-1,iz  );
-    field_t* fmz = fa.voxel(ix,  iy,  iz-1);
-
-    // Ari's quadratic spline deposit scheme current at t=n+1/2
-     f0->jfx +=  w0*p->ux;
-     fx->jfx +=  wx*p->ux;
-     fy->jfx +=  wy*p->ux;
-     fz->jfx +=  wz*p->ux;
-    fmx->jfx += wmx*p->ux;
-    fmy->jfx += wmy*p->ux;
-    fmz->jfx += wmz*p->ux;
-
-     f0->jfy +=  w0*p->uy;
-     fx->jfy +=  wx*p->uy;
-     fy->jfy +=  wy*p->uy;
-     fz->jfy +=  wz*p->uy;
-    fmx->jfy += wmx*p->uy;
-    fmy->jfy += wmy*p->uy;
-    fmz->jfy += wmz*p->uy;
-
-     f0->jfz +=  w0*p->uz;
-     fx->jfz +=  wx*p->uz;
-     fy->jfz +=  wy*p->uz;
-     fz->jfz +=  wz*p->uz;
-    fmx->jfz += wmx*p->uz;
-    fmy->jfz += wmy*p->uz;
-    fmz->jfz += wmz*p->uz;
-
-    // Ari's quadratic spline deposit scheme density at t=n+1/2 (not t=n+1 !!)
-     f0->rhof +=  w0;
-     fx->rhof +=  wx;
-     fy->rhof +=  wy;
-     fz->rhof +=  wz;
-    fmx->rhof += wmx;
-    fmy->rhof += wmy;
-    fmz->rhof += wmz;
-
-    //if (ip == 0) {
-    //  printf("depst ind %d xmh %f %f %f uxyz %f %f %f . . . jrho %f %f %f %f\n",
-    //      p->ind, xmh,ymh,zmh, p->ux,p->uy,p->uz,
-    //      f0->jfx, f0->jfy, f0->jfz, f0->rhof
-    //  );
-    //}
-
-  }  // end particle deposit loop
-
-} // end ParticleArray::deposit()
-#else
+    deposit_one_qs( xmh, ymh, zmh, p->ux, p->uy, p->uz, p->w );
+#endif
 #ifdef SHAPE_NGP
-void ParticleArray::deposit(int unwind) {
-
-  const float one_half       = 1./2.;
-
-  const float cdt_dx         = fa.dt/fa.hx;  // implicit c=1 in c*dt/dx
-  const float cdt_dy         = fa.dt/fa.hy;
-  const float cdt_dz         = fa.dt/fa.hz;
-
-  const float qsp_rV = qsp/(fa.hx*fa.hy*fa.hz);
-
-  // Deposit at particle streak midpoint,
-  // or deposit at current particle position?
-  const float frac = (unwind == 1) ? one_half : 0;
-
-  for (int ip=0; ip<np; ++ip) {
-
-    particle_t* p = &(p0[ip]);
-
-    // Unwind to get streak midpoint
-    float xmh = (p->x - frac*(p->ux)*cdt_dx);  // xmh = x minus half step
-    float ymh = (p->y - frac*(p->uy)*cdt_dy);
-    float zmh = (p->z - frac*(p->uz)*cdt_dz);
-
-    // Midpoint voxel indices
-    int ix = (int)(xmh + one_half);  // particles use cell-centered coordinates
-    int iy = (int)(ymh + one_half);
-    int iz = (int)(zmh + one_half);
-
-    // Combined (charge x particle weight x inverse cell size) factor
-    // for deposit
-    float w0 = p->w * qsp_rV;
-
-    // Ari's quadratic spline deposit scheme current at t=n+1/2
-    field_t* f0 = fa.voxel(ix,iy,iz);
-    f0->jfx +=  w0*p->ux;
-    f0->jfy +=  w0*p->uy;
-    f0->jfz +=  w0*p->uz;
-    // Ari's quadratic spline deposit scheme density at t=n+1/2 (not t=n+1 !!)
-    f0->rhof += w0;
-
-  }  // end particle deposit loop
-
-} // end ParticleArray::deposit()
-#else
+    deposit_one_ngp( xmh, ymh, zmh, p->ux, p->uy, p->uz, p->w );
+#endif
 #ifdef SHAPE_CIC
-
-void ParticleArray::deposit(int unwind) {
-
-  const float one      = 1.;
-  const float one_half = 1./2.;
-
-  const float cdt_dx   = fa.dt/fa.hx;  // implicit c=1 in c*dt/dx
-  const float cdt_dy   = fa.dt/fa.hy;
-  const float cdt_dz   = fa.dt/fa.hz;
-
-  const float qsp_rV = qsp/(fa.hx*fa.hy*fa.hz);
-
-  // Deposit at particle streak midpoint,
-  // or deposit at current particle position?
-  const float frac = (unwind == 1) ? one_half : 0;
-
-  for (int ip=0; ip<np; ++ip) {
-
-    particle_t* p = &(p0[ip]);
-
-    // Unwind to get streak midpoint
-    float xmh = (p->x - frac*(p->ux)*cdt_dx);  // xmh = x minus half step
-    float ymh = (p->y - frac*(p->uy)*cdt_dy);
-    float zmh = (p->z - frac*(p->uz)*cdt_dz);
-
-    // Voxel indices nearest (below/left) of streak midpoint
-    int ix = (int)(xmh);  // particles use cell-centered coordinates
-    int iy = (int)(ymh);
-    int iz = (int)(zmh);
-    // "Lower/left" voxel offsets on interval [0,1]
-    // unlike other parts of VPIC code
-    float dx = xmh - ix;
-    float dy = ymh - iy;
-    float dz = zmh - iz;
-
-    // CIC = area weighting = trilinear interpolation
-    field_t* f0   = fa.voxel( ix  , iy  , iz   );
-    field_t* fz   = fa.voxel( ix  , iy  , iz+1 );
-    field_t* fy   = fa.voxel( ix  , iy+1, iz   );
-    field_t* fyz  = fa.voxel( ix  , iy+1, iz+1 );
-    field_t* fx   = fa.voxel( ix+1, iy  , iz   );
-    field_t* fxz  = fa.voxel( ix+1, iy  , iz+1 );
-    field_t* fxy  = fa.voxel( ix+1, iy+1, iz   );
-    field_t* fxyz = fa.voxel( ix+1, iy+1, iz+1 );
-    // No interpolation is actually required...
-    // what I could do with interp array is have each voxel store its
-    // 7 neighbor values?
-
-    // Combined charge x particle weight x inverse cell size
-    float qw   = p->w * qsp_rV;
-    float w0   = qw * (1.-dx)*(1.-dy)*(1.-dz);
-    float wz   = qw * (1.-dx)*(1.-dy)*    dz ;
-    float wy   = qw * (1.-dx)*    dy *(1.-dz);
-    float wyz  = qw * (1.-dx)*    dy *    dz ;
-    float wx   = qw *     dx *(1.-dy)*(1.-dz);
-    float wxz  = qw *     dx *(1.-dy)*    dz ;
-    float wxy  = qw *     dx *    dy *(1.-dz);
-    float wxyz = qw *     dx *    dy *    dz ;
-
-    // Area weighting
-      f0->jfx +=   w0 * p->ux;
-      fz->jfx +=   wz * p->ux;
-      fy->jfx +=   wy * p->ux;
-     fyz->jfx +=  wyz * p->ux;
-      fx->jfx +=   wx * p->ux;
-     fxz->jfx +=  wxz * p->ux;
-     fxy->jfx +=  wxy * p->ux;
-    fxyz->jfx += wxyz * p->ux;
-
-      f0->jfy +=   w0 * p->uy;
-      fz->jfy +=   wz * p->uy;
-      fy->jfy +=   wy * p->uy;
-     fyz->jfy +=  wyz * p->uy;
-      fx->jfy +=   wx * p->uy;
-     fxz->jfy +=  wxz * p->uy;
-     fxy->jfy +=  wxy * p->uy;
-    fxyz->jfy += wxyz * p->uy;
-
-      f0->jfz +=   w0 * p->uz;
-      fz->jfz +=   wz * p->uz;
-      fy->jfz +=   wy * p->uz;
-     fyz->jfz +=  wyz * p->uz;
-      fx->jfz +=   wx * p->uz;
-     fxz->jfz +=  wxz * p->uz;
-     fxy->jfz +=  wxy * p->uz;
-    fxyz->jfz += wxyz * p->uz;
-
-    // Density deposited at t=n+1/2 (not t=n+1 !!)
-      f0->rhof +=   w0;
-      fz->rhof +=   wz;
-      fy->rhof +=   wy;
-     fyz->rhof +=  wyz;
-      fx->rhof +=   wx;
-     fxz->rhof +=  wxz;
-     fxy->rhof +=  wxy;
-    fxyz->rhof += wxyz;
-
-  }  // end particle deposit loop
-
-} // end ParticleArray::deposit()
-#else
+    deposit_one_cic( xmh, ymh, zmh, p->ux, p->uy, p->uz, p->w );
+#endif
 #ifdef SHAPE_TSC
-
-void ParticleArray::deposit(int unwind) {
-
-  const float one      = 1.;
-  const float one_half = 1./2.;
-  const float two      = 2.;
-
-  const float cdt_dx   = fa.dt/fa.hx;  // implicit c=1 in c*dt/dx
-  const float cdt_dy   = fa.dt/fa.hy;
-  const float cdt_dz   = fa.dt/fa.hz;
-
-  const float qsp_rV = qsp/(fa.hx*fa.hy*fa.hz);
-
-  // Deposit at particle streak midpoint,
-  // or deposit at current particle position?
-  const float frac = (unwind == 1) ? one_half : 0;
-
-  for (int ip=0; ip<np; ++ip) {
-
-    particle_t* p = &(p0[ip]);
-
-    // Unwind to get streak midpoint
-    float xmh = (p->x - frac*(p->ux)*cdt_dx);  // xmh = x minus half step
-    float ymh = (p->y - frac*(p->uy)*cdt_dy);
-    float zmh = (p->z - frac*(p->uz)*cdt_dz);
-
-    // Midpoint voxel indices
-    int ix = (int)(xmh + one_half);  // particles use cell-centered coordinates
-    int iy = (int)(ymh + one_half);
-    int iz = (int)(zmh + one_half);
-    // Midpoint voxel offsets on interval [-1,1]
-    float dx = two*(xmh - ix);
-    float dy = two*(ymh - iy);
-    float dz = two*(zmh - iz);
-
-    // TSC = 27 points required
-    // Hockney/Eastwood Eqn (5-88)
-    //float qw  = p->w * qsp_rV;
-    //float wmx = 1/2 * (3/2 - (2+dx)/2) * (3/2 - (2+dx)/2)
-    //float w0  = 3/4 - (dx/2)*(dx/2);
-    //float wx  = 1/2 * (3/2 - (2-dx)/2) * (3/2 - (2-dx)/2)
-    // Refactored form
-    float qw     = p->w * qsp_rV / 512.;
-    float wxs[3] = {     (1-dx)*(1-dx),
-                     2 * (3 - dx*dx),
-                         (1+dx)*(1+dx) };
-    float wys[3] = {     (1-dy)*(1-dy),
-                     2 * (3 - dy*dy),
-                         (1+dy)*(1+dy) };
-    float wzs[3] = {     (1-dz)*(1-dz),
-                     2 * (3 - dz*dz),
-                         (1+dz)*(1+dz) };
-
-    for (int ii=-1; ii<=1; ++ii) {
-    for (int jj=-1; jj<=1; ++jj) {
-    for (int kk=-1; kk<=1; ++kk) {
-      field_t* fv = fa.voxel( ix+ii, iy+jj, iz+kk );
-      float w3 = qw * wxs[ii+1] * wys[jj+1] * wzs[kk+1];
-      fv-> jfx += w3 * p->ux;
-      fv-> jfy += w3 * p->uy;
-      fv-> jfz += w3 * p->uz;
-      fv->rhof += w3;
-    }}}
+    deposit_one_tsc( xmh, ymh, zmh, p->ux, p->uy, p->uz, p->w );
+#endif
 
   }  // end particle deposit loop
 
 } // end ParticleArray::deposit()
 
-// endifdef shape_TSC
-#endif
-// endifdef shape_CIC
-#endif
-// endifdef shape_NGP
-#endif
-// endifdef shape_QS
-#endif
+
+// =====================================
+// Particle deposit algorithms
+// =====================================
+
+// shape needs to be matched to interpolator
+// borrowing function interface style from TRISTAN's zigzag(...)
+
+inline void ParticleArray::deposit_one_qs(
+  float xx, float yy, float zz,  // position
+  float ux, float uy, float uz,  // velocity
+  float wt  // charge*weight
+) {
+
+  const static float one       = 1.;
+  const static float two       = 2.;
+  const static float three     = 3.;
+  const static float one_half  = 1./2.;
+  const static float qsp_rV_12 = qsp/(12*fa.hx*fa.hy*fa.hz);
+
+  // Voxel indices
+  int ix = (int)(xx + one_half);  // particles use cell-centered coordinates
+  int iy = (int)(yy + one_half);
+  int iz = (int)(zz + one_half);
+  // Voxel offsets on interval [-1,1]
+  float v0 = two*(xx - ix);
+  float v1 = two*(yy - iy);
+  float v2 = two*(zz - iz);
+
+  // Combined (charge x particle weight x inverse cell size) factor
+  float qw = wt * qsp_rV_12;
+
+  // Ari's quadratic spline deposit scheme
+  // weights sum to 1, without the factor of qw
+  float w0 =  qw*two*( three - v0*v0 - v1*v1 - v2*v2 );
+  float wx =  qw*( v0 + one )*( v0 + one );
+  float wy =  qw*( v1 + one )*( v1 + one );
+  float wz =  qw*( v2 + one )*( v2 + one );
+  float wmx = qw*( v0 - one )*( v0 - one );
+  float wmy = qw*( v1 - one )*( v1 - one );
+  float wmz = qw*( v2 - one )*( v2 - one );
+
+  field_t* f0  = fa.voxel(ix,  iy,  iz  );
+  field_t* fx  = fa.voxel(ix+1,iy,  iz  );
+  field_t* fy  = fa.voxel(ix,  iy+1,iz  );
+  field_t* fz  = fa.voxel(ix,  iy,  iz+1);
+  field_t* fmx = fa.voxel(ix-1,iy,  iz  );
+  field_t* fmy = fa.voxel(ix,  iy-1,iz  );
+  field_t* fmz = fa.voxel(ix,  iy,  iz-1);
+
+   f0->jfx +=  w0*ux;
+   fx->jfx +=  wx*ux;
+   fy->jfx +=  wy*ux;
+   fz->jfx +=  wz*ux;
+  fmx->jfx += wmx*ux;
+  fmy->jfx += wmy*ux;
+  fmz->jfx += wmz*ux;
+
+   f0->jfy +=  w0*uy;
+   fx->jfy +=  wx*uy;
+   fy->jfy +=  wy*uy;
+   fz->jfy +=  wz*uy;
+  fmx->jfy += wmx*uy;
+  fmy->jfy += wmy*uy;
+  fmz->jfy += wmz*uy;
+
+   f0->jfz +=  w0*uz;
+   fx->jfz +=  wx*uz;
+   fy->jfz +=  wy*uz;
+   fz->jfz +=  wz*uz;
+  fmx->jfz += wmx*uz;
+  fmy->jfz += wmy*uz;
+  fmz->jfz += wmz*uz;
+
+   f0->rhof +=  w0;
+   fx->rhof +=  wx;
+   fy->rhof +=  wy;
+   fz->rhof +=  wz;
+  fmx->rhof += wmx;
+  fmy->rhof += wmy;
+  fmz->rhof += wmz;
+
+} // end ParticleArray::deposit_one_qs()
+
+
+inline void ParticleArray::deposit_one_ngp(
+  float xx, float yy, float zz,  // position
+  float ux, float uy, float uz,  // velocity
+  float wt  // charge*weight
+) {
+
+  const static float one_half = 1./2.;
+  const static float qsp_rV   = qsp/(fa.hx*fa.hy*fa.hz);
+
+  // Voxel indices
+  int ix = (int)(xx + one_half);  // particles use cell-centered coordinates
+  int iy = (int)(yy + one_half);
+  int iz = (int)(zz + one_half);
+
+  // Combined (charge x particle weight x inverse cell size) factor
+  float w0 = wt * qsp_rV;
+
+  field_t* f0 = fa.voxel(ix,iy,iz);
+  f0->jfx  += w0 * ux;
+  f0->jfy  += w0 * uy;
+  f0->jfz  += w0 * uz;
+  f0->rhof += w0;
+
+} // end ParticleArray::deposit_one_ngp()
+
+
+inline void ParticleArray::deposit_one_cic(
+  float xx, float yy, float zz,  // position
+  float ux, float uy, float uz,  // velocity
+  float wt  // charge*weight
+) {
+
+  const static float one      = 1.;
+  const static float one_half = 1./2.;
+  const static float qsp_rV   = qsp/(fa.hx*fa.hy*fa.hz);
+
+  // Voxel indices nearest (below/left) of streak midpoint
+  int ix = (int)(xx);  // particles use cell-centered coordinates
+  int iy = (int)(yy);
+  int iz = (int)(zz);
+  // "Lower/left" voxel offsets on interval [0,1]
+  // unlike other parts of VPIC code
+  float dx = xx - ix;
+  float dy = yy - iy;
+  float dz = zz - iz;
+
+  // CIC = area weighting = trilinear interpolation
+  field_t* f0   = fa.voxel( ix  , iy  , iz   );
+  field_t* fz   = fa.voxel( ix  , iy  , iz+1 );
+  field_t* fy   = fa.voxel( ix  , iy+1, iz   );
+  field_t* fyz  = fa.voxel( ix  , iy+1, iz+1 );
+  field_t* fx   = fa.voxel( ix+1, iy  , iz   );
+  field_t* fxz  = fa.voxel( ix+1, iy  , iz+1 );
+  field_t* fxy  = fa.voxel( ix+1, iy+1, iz   );
+  field_t* fxyz = fa.voxel( ix+1, iy+1, iz+1 );
+  // No interpolation is actually required...
+  // what I could do with interp array is have each voxel store its
+  // 7 neighbor values?
+
+  // Combined charge x particle weight x inverse cell size
+  float qw   = wt * qsp_rV;
+  float w0   = qw * (1.-dx)*(1.-dy)*(1.-dz);
+  float wz   = qw * (1.-dx)*(1.-dy)*    dz ;
+  float wy   = qw * (1.-dx)*    dy *(1.-dz);
+  float wyz  = qw * (1.-dx)*    dy *    dz ;
+  float wx   = qw *     dx *(1.-dy)*(1.-dz);
+  float wxz  = qw *     dx *(1.-dy)*    dz ;
+  float wxy  = qw *     dx *    dy *(1.-dz);
+  float wxyz = qw *     dx *    dy *    dz ;
+
+    f0->jfx +=   w0 * ux;
+    fz->jfx +=   wz * ux;
+    fy->jfx +=   wy * ux;
+   fyz->jfx +=  wyz * ux;
+    fx->jfx +=   wx * ux;
+   fxz->jfx +=  wxz * ux;
+   fxy->jfx +=  wxy * ux;
+  fxyz->jfx += wxyz * ux;
+
+    f0->jfy +=   w0 * uy;
+    fz->jfy +=   wz * uy;
+    fy->jfy +=   wy * uy;
+   fyz->jfy +=  wyz * uy;
+    fx->jfy +=   wx * uy;
+   fxz->jfy +=  wxz * uy;
+   fxy->jfy +=  wxy * uy;
+  fxyz->jfy += wxyz * uy;
+
+    f0->jfz +=   w0 * uz;
+    fz->jfz +=   wz * uz;
+    fy->jfz +=   wy * uz;
+   fyz->jfz +=  wyz * uz;
+    fx->jfz +=   wx * uz;
+   fxz->jfz +=  wxz * uz;
+   fxy->jfz +=  wxy * uz;
+  fxyz->jfz += wxyz * uz;
+
+    f0->rhof +=   w0;
+    fz->rhof +=   wz;
+    fy->rhof +=   wy;
+   fyz->rhof +=  wyz;
+    fx->rhof +=   wx;
+   fxz->rhof +=  wxz;
+   fxy->rhof +=  wxy;
+  fxyz->rhof += wxyz;
+
+} // end ParticleArray::deposit_one_cic()
+
+
+inline void ParticleArray::deposit_one_tsc(
+  float xx, float yy, float zz,  // position
+  float ux, float uy, float uz,  // velocity
+  float wt  // charge*weight
+) {
+
+  const static float one      = 1.;
+  const static float one_half = 1./2.;
+  const static float two      = 2.;
+  const static float qsp_rV   = qsp/(fa.hx*fa.hy*fa.hz);
+
+  // Midpoint voxel offsets on interval [-1,1]
+
+  // Voxel indices
+  int ix = (int)(xx + one_half);  // particles use cell-centered coordinates
+  int iy = (int)(yy + one_half);
+  int iz = (int)(zz + one_half);
+  // Voxel offsets on interval [-1,1]
+  float dx = two*(xx - ix);
+  float dy = two*(yy - iy);
+  float dz = two*(zz - iz);
+
+  // TSC = 27 points required
+  // Hockney/Eastwood Eqn (5-88)
+  //float qw  = p->w * qsp_rV;
+  //float wmx = 1/2 * (3/2 - (2+dx)/2) * (3/2 - (2+dx)/2)
+  //float w0  = 3/4 - (dx/2)*(dx/2);
+  //float wx  = 1/2 * (3/2 - (2-dx)/2) * (3/2 - (2-dx)/2)
+  // Refactored form
+  float qw     = wt * qsp_rV / 512.;
+  float wxs[3] = {     (1-dx)*(1-dx),
+                   2 * (3 - dx*dx),
+                       (1+dx)*(1+dx) };
+  float wys[3] = {     (1-dy)*(1-dy),
+                   2 * (3 - dy*dy),
+                       (1+dy)*(1+dy) };
+  float wzs[3] = {     (1-dz)*(1-dz),
+                   2 * (3 - dz*dz),
+                       (1+dz)*(1+dz) };
+
+  for (int ii=-1; ii<=1; ++ii) {
+  for (int jj=-1; jj<=1; ++jj) {
+  for (int kk=-1; kk<=1; ++kk) {
+    field_t* fv = fa.voxel( ix+ii, iy+jj, iz+kk );
+    float w3 = qw * wxs[ii+1] * wys[jj+1] * wzs[kk+1];
+    fv-> jfx += w3 * ux;
+    fv-> jfy += w3 * uy;
+    fv-> jfz += w3 * uz;
+    fv->rhof += w3;
+  }}}
+
+
+} // end ParticleArray::deposit_one_tsc()
 
 
 // =====================================

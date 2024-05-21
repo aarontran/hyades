@@ -55,6 +55,11 @@ class ParticleArray {
     void deposit(int unwind);
     void boundary_teleport();
 
+    void deposit_one_qs (float xx, float yy, float zz, float ux, float uy, float uz, float wt);
+    void deposit_one_ngp(float xx, float yy, float zz, float ux, float uy, float uz, float wt);
+    void deposit_one_cic(float xx, float yy, float zz, float ux, float uy, float uz, float wt);
+    void deposit_one_tsc(float xx, float yy, float zz, float ux, float uy, float uz, float wt);
+
     // High-level dump methods
     void dump(int step, const char* formatstr, int stride);
     void hputf(hid_t file_id, const char* attr_name, int stride);
